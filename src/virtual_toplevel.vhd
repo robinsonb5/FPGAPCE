@@ -557,7 +557,7 @@ end process;
 
 FL_DQ<=boot_data;
 
-ROM_RESET_N <= boot_done and host_reset_n;
+ROM_RESET_N <= host_bootdone and host_reset_n;
 
 process( CLK )
 begin
