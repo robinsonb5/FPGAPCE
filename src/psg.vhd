@@ -15,9 +15,9 @@ entity psg is
 		WE		: in std_logic;
 		
 		-- DAC Interface
-		DAC_LATCH	: in std_logic;
-		LDATA		: out std_logic_vector(23 downto 0);
-		RDATA		: out std_logic_vector(23 downto 0)
+--		DAC_LATCH	: in std_logic;
+		LDATA		: out std_logic_vector(15 downto 0);
+		RDATA		: out std_logic_vector(15 downto 0)
 	);
 end psg;
 
@@ -884,13 +884,13 @@ begin
 				RACC <= (others => '0');
 				MIX_CNT <= (others => '0');
 				VT_ADDR <= (others => '1');
-				if DAC_LATCH = '1' then
+--				if DAC_LATCH = '1' then
 					VT_ADDR <= CH(conv_integer(MIX_CNT)).GL_OUT 
 						& ( "1011101" - CH(conv_integer(MIX_CNT)).AL 
 						- (CH(conv_integer(MIX_CNT)).LAL & "1") 
 						- (LMAL & "1") );
 					MIX <= MIX_LREAD;
-				end if;
+--				end if;
 			
 			when MIX_LREAD =>
 				MIX <= MIX_LREAD2;
@@ -933,8 +933,8 @@ begin
 	end if;
 end process;
 
-LDATA <= LDATA_FF;
-RDATA <= RDATA_FF;
+LDATA <= LDATA_FF(23 downto 8);
+RDATA <= RDATA_FF(23 downto 8);
 	
 end rtl;
 

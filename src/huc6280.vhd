@@ -32,13 +32,16 @@ entity huc6280 is
 		
 		K		: in std_logic_vector(7 downto 0);
 		O		: out std_logic_vector(7 downto 0);
+
+		DAC_LDATA : out std_logic_vector(15 downto 0);
+		DAC_RDATA : out std_logic_vector(15 downto 0)
 		
-		AUD_XCK		: out std_logic;
-		AUD_BCLK	: out std_logic;
-		AUD_DACDAT	: out std_logic;
-		AUD_DACLRCK	: out std_logic;
-		I2C_SDAT	: out std_logic;
-		I2C_SCLK	: out std_logic
+--		AUD_XCK		: out std_logic;
+--		AUD_BCLK	: out std_logic;
+--		AUD_DACDAT	: out std_logic;
+--		AUD_DACLRCK	: out std_logic;
+--		I2C_SDAT	: out std_logic;
+--		I2C_SCLK	: out std_logic
 	);
 end huc6280;
 
@@ -120,12 +123,12 @@ signal O_FF			: std_logic_vector(7 downto 0);
 signal CLKOUT_FF	: std_logic;
 
 
-signal DAC_CLKEN	: std_logic;
-signal DAC_INIT		: std_logic;
-signal DAC_INIT_CNT	: std_logic_vector(3 downto 0);
-signal DAC_LDATA	: std_logic_vector(23 downto 0);
-signal DAC_RDATA	: std_logic_vector(23 downto 0);
-signal DAC_LATCH	: std_logic;
+--signal DAC_CLKEN	: std_logic;
+--signal DAC_INIT		: std_logic;
+--signal DAC_INIT_CNT	: std_logic_vector(3 downto 0);
+--signal DAC_LDATA	: std_logic_vector(23 downto 0);
+--signal DAC_RDATA	: std_logic_vector(23 downto 0);
+--signal DAC_LATCH	: std_logic;
 
 signal clockDone	: std_logic := '0';
 signal romHCycles	: integer range 0 to 32767 := 0;
@@ -479,50 +482,50 @@ PSG : entity work.psg port map (
 	A		=> CPU_A(3 downto 0),
 	WE		=> PSG_WE,
 	
-	DAC_LATCH	=> DAC_LATCH,
+--	DAC_LATCH	=> open, -- DAC_LATCH,
 	LDATA		=> DAC_LDATA,
 	RDATA		=> DAC_RDATA
 );
 
 -- Audio DAC
-DAC : entity work.g00_audio_interface port map(
-	LDATA	=> DAC_LDATA,
-	RDATA	=> DAC_RDATA,
-	
-	clk		=> CLK,
-	rst		=> RESET,
-	INIT	=> DAC_INIT,
-	W_EN	=> '1',
-	CLKEN	=> DAC_CLKEN,
-	
-	pulse_48KHz	=> DAC_LATCH,
-	AUD_MCLK	=> AUD_XCK,
-	AUD_BCLK	=> AUD_BCLK,
-	AUD_DACDAT	=> AUD_DACDAT,
-	AUD_DACLRCK	=> AUD_DACLRCK,
-	I2C_SDAT	=> I2C_SDAT,
-	I2C_SCLK	=> I2C_SCLK
-);
-
-process( CLK )
-begin
-	if rising_edge( CLK ) then
-		if RESET_N = '0' then
-			DAC_CLKEN <= '0';
-			DAC_INIT <= '0';
-			DAC_INIT_CNT <= (others => '0');
-		else
-			DAC_CLKEN <= not DAC_CLKEN;
-			if DAC_CLKEN = '1' then
-				if DAC_INIT_CNT = "1111" then
-					DAC_INIT <= '1';
-				else
-					DAC_INIT_CNT <= DAC_INIT_CNT + 1;
-				end if;
-			end if;
-		end if;
-	end if;
-end process;
+--DAC : entity work.g00_audio_interface port map(
+--	LDATA	=> DAC_LDATA,
+--	RDATA	=> DAC_RDATA,
+--	
+--	clk		=> CLK,
+--	rst		=> RESET,
+--	INIT	=> DAC_INIT,
+--	W_EN	=> '1',
+--	CLKEN	=> DAC_CLKEN,
+--	
+--	pulse_48KHz	=> DAC_LATCH,
+--	AUD_MCLK	=> AUD_XCK,
+--	AUD_BCLK	=> AUD_BCLK,
+--	AUD_DACDAT	=> AUD_DACDAT,
+--	AUD_DACLRCK	=> AUD_DACLRCK,
+--	I2C_SDAT	=> I2C_SDAT,
+--	I2C_SCLK	=> I2C_SCLK
+--);
+--
+--process( CLK )
+--begin
+--	if rising_edge( CLK ) then
+--		if RESET_N = '0' then
+--			DAC_CLKEN <= '0';
+--			DAC_INIT <= '0';
+--			DAC_INIT_CNT <= (others => '0');
+--		else
+--			DAC_CLKEN <= not DAC_CLKEN;
+--			if DAC_CLKEN = '1' then
+--				if DAC_INIT_CNT = "1111" then
+--					DAC_INIT <= '1';
+--				else
+--					DAC_INIT_CNT <= DAC_INIT_CNT + 1;
+--				end if;
+--			end if;
+--		end if;
+--	end if;
+--end process;
 
 
 end rtl;

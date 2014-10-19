@@ -8,7 +8,7 @@ use IEEE.STD_LOGIC_TEXTIO.all;
 use IEEE.NUMERIC_STD.ALL;
 
 
-entity pce_top is
+entity Virtual_Toplevel is
 	port(
 		SW			: in std_logic_vector(9 downto 0);
 		
@@ -68,7 +68,7 @@ entity pce_top is
 		VGA_VS		: out std_logic;
 		VGA_HS		: out std_logic				
 	);
-end pce_top;
+end entity;
 
 architecture rtl of pce_top is
 

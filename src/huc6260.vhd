@@ -24,16 +24,16 @@ entity huc6260 is
 		CLKEN		: out std_logic;
 		
 		-- NTSC/RGB Video Output
-		R			: out std_logic_vector(2 downto 0);
-		G			: out std_logic_vector(2 downto 0);
-		B			: out std_logic_vector(2 downto 0);		
+		R			: out std_logic_vector(7 downto 0);
+		G			: out std_logic_vector(7 downto 0);
+		B			: out std_logic_vector(7 downto 0);		
 		VS_N		: out std_logic;
 		HS_N		: out std_logic;
 		
 		-- VGA Video Output (Scandoubler)
-		VGA_R		: out std_logic_vector(3 downto 0);
-		VGA_G		: out std_logic_vector(3 downto 0);
-		VGA_B		: out std_logic_vector(3 downto 0);
+		VGA_R		: out std_logic_vector(7 downto 0);
+		VGA_G		: out std_logic_vector(7 downto 0);
+		VGA_B		: out std_logic_vector(7 downto 0);
 		VGA_VS_N	: out std_logic;
 		VGA_HS_N	: out std_logic
 	);
@@ -73,9 +73,9 @@ signal VS_N_FF		: std_logic;
 signal HS_N_FF		: std_logic;
 
 -- VGA Video Output (Scandoubler)
-signal VGA_R_FF		: std_logic_vector(3 downto 0);
-signal VGA_G_FF		: std_logic_vector(3 downto 0);
-signal VGA_B_FF		: std_logic_vector(3 downto 0);
+signal VGA_R_FF		: std_logic_vector(2 downto 0);
+signal VGA_G_FF		: std_logic_vector(2 downto 0);
+signal VGA_B_FF		: std_logic_vector(2 downto 0);
 signal VGA_VS_N_FF	: std_logic;
 signal VGA_HS_N_FF	: std_logic;
 
@@ -370,25 +370,25 @@ begin
 end process;
 
 -- 31 KHz reads
-VGA_G_FF <= SL0_DO(8 downto 6) & SL0_DO(8) when VGA_V_CNT(1) = '1'
-	else SL1_DO(8 downto 6) & SL1_DO(8);
-VGA_R_FF <= SL0_DO(5 downto 3) & SL0_DO(5) when VGA_V_CNT(1) = '1'
-	else SL1_DO(5 downto 3) & SL1_DO(5);
-VGA_B_FF <= SL0_DO(2 downto 0) & SL0_DO(2) when VGA_V_CNT(1) = '1'
-	else SL1_DO(2 downto 0) & SL1_DO(2);
+VGA_G_FF <= SL0_DO(8 downto 6) when VGA_V_CNT(1) = '1'
+	else SL1_DO(8 downto 6);
+VGA_R_FF <= SL0_DO(5 downto 3) when VGA_V_CNT(1) = '1'
+	else SL1_DO(5 downto 3);
+VGA_B_FF <= SL0_DO(2 downto 0) when VGA_V_CNT(1) = '1'
+	else SL1_DO(2 downto 0);
 
 -- Outputs
 DO <= DO_FF;
 
-R <= R_FF;
-G <= G_FF;
-B <= B_FF;
+R <= R_FF & R_FF & R_FF(1 downto 0);
+G <= G_FF & G_FF & G_FF(1 downto 0);
+B <= B_FF & B_FF & B_FF(1 downto 0);
 VS_N <= VS_N_FF;
 HS_N <= HS_N_FF;
 
-VGA_R <= VGA_R_FF;
-VGA_G <= VGA_G_FF;
-VGA_B <= VGA_B_FF;
+VGA_R <= VGA_R_FF & VGA_R_FF & VGA_R_FF(1 downto 0);
+VGA_G <= VGA_G_FF & VGA_G_FF & VGA_G_FF(1 downto 0);
+VGA_B <= VGA_B_FF & VGA_B_FF & VGA_B_FF(1 downto 0);
 VGA_VS_N <= VGA_VS_N_FF;
 VGA_HS_N <= VGA_HS_N_FF;
 
