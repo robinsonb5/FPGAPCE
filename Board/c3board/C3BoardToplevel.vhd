@@ -362,7 +362,7 @@ vga_window<='1';
 			outbits => 6
 	)
 		port map(
-			clk=>sysclk,
+			clk=>memclk,
 			hsync=>vga_hsync,
 			vsync=>vga_vsync,
 			vid_ena=>vga_window,
@@ -378,7 +378,7 @@ vga_window<='1';
 leftsd: component hybrid_pwm_sd
 	port map
 	(
-		clk => sysclk,
+		clk => memclk,
 		n_reset => reset_n,
 		din(15) => not audio_l(15),
 		din(14 downto 0) => std_logic_vector(audio_l(14 downto 0)),
@@ -388,7 +388,7 @@ leftsd: component hybrid_pwm_sd
 rightsd: component hybrid_pwm_sd
 	port map
 	(
-		clk => sysclk,
+		clk => memclk,
 		n_reset => reset_n,
 		din(15) => not audio_r(15),
 		din(14 downto 0) => std_logic_vector(audio_r(14 downto 0)),

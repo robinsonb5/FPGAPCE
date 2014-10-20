@@ -229,7 +229,7 @@ signal KEY : std_logic_vector(3 downto 0);
 begin
 
 -- Reset
-PRE_RESET_N <= reset and SDR_INIT_DONE;
+PRE_RESET_N <= reset and SDR_INIT_DONE and host_reset_n;
 
 -- FIXME - take these from the OSD
 -- Header present switch

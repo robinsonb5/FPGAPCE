@@ -1,3 +1,9 @@
+
+PLEASE NOTE - this is a fork of the original FPGA PC Engine core, and is
+currently broken while I overhaul its structure, remove as many board dependencies
+as possible and add an OSD / Control module.
+
+
 ================================================================================
 fpgapce - a NEC PC-Engine/Turbografx-16 clone in a FPGA.
 Copyright (c) 2011-2013 Gregory Estrade (greg@torlus.com)
