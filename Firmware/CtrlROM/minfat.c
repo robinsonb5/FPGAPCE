@@ -244,6 +244,34 @@ int GetCluster(int cluster)
 }
 
 
+DIRENTRY *NextDirEntry(int prev)
+{
+    unsigned long  iDirectory = 0;       // only root directory is supported
+    DIRENTRY      *pEntry = NULL;        // pointer to current entry in sector buffer
+    unsigned long  iDirectorySector;     // current sector of directory entries table
+    unsigned long  iDirectoryCluster;    // start cluster of subdirectory or FAT32 root directory
+    unsigned long  iEntry;               // entry index in directory cluster or FAT16 root directory
+
+    iDirectoryCluster = root_directory_cluster;
+
+	// FIXME traverse clusters if necessary
+
+    iDirectorySector = root_directory_start+(prev>>4);
+
+	if ((prev & 0x0F) == 0) // first entry in sector, load the sector
+	{
+		sd_read_sector(iDirectorySector, sector_buffer); // root directory is linear
+	}
+	pEntry = (DIRENTRY*)sector_buffer;
+	if (pEntry->Name[0] != SLOT_EMPTY && pEntry->Name[0] != SLOT_DELETED) // valid entry??
+	{
+		if (!(pEntry->Attributes & (ATTR_VOLUME | ATTR_DIRECTORY))) // not a volume nor directory
+			return(pEntry+(prev&0xf));
+	}
+	return((DIRENTRY *)0);
+}
+
+
 int FileOpen(fileTYPE *file, const char *name)
 {
     unsigned long  iDirectory = 0;       // only root directory is supported
@@ -251,17 +279,18 @@ int FileOpen(fileTYPE *file, const char *name)
     unsigned long  iDirectorySector;     // current sector of directory entries table
     unsigned long  iDirectoryCluster;    // start cluster of subdirectory or FAT32 root directory
     unsigned long  iEntry;               // entry index in directory cluster or FAT16 root directory
-    unsigned long  nEntries;             // number of entries per cluster or FAT16 root directory size
+//    unsigned long  nEntries;             // number of entries per cluster or FAT16 root directory size
 
 //	buffered_fat_index=-1;
 
     iDirectoryCluster = root_directory_cluster;
     iDirectorySector = root_directory_start;
-    nEntries = fat32 ?  cluster_size << 4 : root_directory_size << 4; // 16 entries per sector
+	// We already have this, as dir_entries.
+//    nEntries = fat32 ?  cluster_size << 4 : root_directory_size << 4; // 16 entries per sector
 
     while (1)
     {
-        for (iEntry = 0; iEntry < nEntries; iEntry++)
+        for (iEntry = 0; iEntry < dir_entries; iEntry++)
         {
             if ((iEntry & 0x0F) == 0) // first entry in sector, load the sector
             {

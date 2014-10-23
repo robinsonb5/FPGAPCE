@@ -161,7 +161,7 @@ int Menu_Run()
 				Menu_Set(MENU_ACTION_SUBMENU(m->action));
 				break;
 			case MENU_ENTRY_CALLBACK:
-				MENU_ACTION_CALLBACK(m->action)();
+				MENU_ACTION_CALLBACK(m->action)(currentrow);
 				break;
 			case MENU_ENTRY_TOGGLE:
 				i=1<<MENU_ACTION_TOGGLE(m->action);

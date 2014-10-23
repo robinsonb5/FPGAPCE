@@ -7,7 +7,7 @@ typedef int menu_action;
 #define MENU_ACTION(x) ((int)(x))
 #define MENU_ACTION_TOGGLE(x) x
 #define MENU_ACTION_CYCLE(x) x
-#define MENU_ACTION_CALLBACK(x) ((void (*)())x)
+#define MENU_ACTION_CALLBACK(x) ((void (*)(int row))x)
 #define MENU_ACTION_SUBMENU(x) ((struct menu_entry *)(x))
 
 #define MENU_CYCLE_VALUE(x) (*(char *)(&(x->action)))

@@ -46,125 +46,161 @@ void WaitEnter()
 	}
 }
 
-enum boot_settings {BOOT_IGNORESETTINGS,BOOT_LOADSETTINGS,BOOT_SAVESETTINGS};
 
-static int Boot(enum boot_settings settings)
+void LoadSettings()
+{
+	int dipsw;
+	if(FileOpen(&file,"FPGAPCE CFG"))	// Do we have a configuration file?
+	{
+		FileRead(&file,sector_buffer);
+		dipsw=*(int *)(&sector_buffer[0]);
+		HW_HOST(HW_HOST_SW)=dipsw;
+		SetDIPSwitch(dipsw);
+	}
+}
+
+
+void SaveSettings(int row)
+{
+	int dipsw=GetDIPSwitch();
+	if(FileOpen(&file,"FPGAPCE CFG"))	// Do we have a configuration file?
+	{
+		int i;
+		int *p=(int *)sector_buffer;
+		*p++=dipsw;
+		for(i=0;i<126;++i)	// Clear remainder of buffer
+			*p++=0;
+		FileWrite(&file,sector_buffer);
+	}
+}
+
+
+static int LoadROM(const char *filename)
 {
 	int result=0;
 	int opened;
 
-	OSD_Puts("Initializing SD card\n");
-	if(spi_init())
+	HW_HOST(HW_HOST_CTRL)=HW_HOST_CTRLF_RESET;	// Put core into Reset
+	HW_HOST(HW_HOST_CTRL)=HW_HOST_CTRLF_SDCARD;	// Release reset but steal SD card
+
+	if((opened=FileOpen(&file,filename)))
 	{
-		int dipsw=GetDIPSwitch();
+		OSD_Puts("Loading ROM\n");
+		int filesize=file.size;
+		unsigned int c=0;
+		int bits;
 
-		if(!FindDrive())
-			return(0);
-
-		HW_HOST(HW_HOST_CTRL)=HW_HOST_CTRLF_SDCARD;	// Release reset but steal SD card
-
-		if((opened=FileOpen(&file,"FPGAPCE CFG")))	// Do we have a configuration file?
+		bits=0;
+		c=filesize;
+		while(c)
 		{
-			if(settings==BOOT_SAVESETTINGS)	// If so, are we saving to it, or loading from it?
+			++bits;
+			c>>=1;
+		}
+		bits-=9;
+
+		if((filesize&0xfff)) // Do we have a header?
+		{
+			filesize-=512;
+			FileNextSector(&file);	// Skip the header		
+		}
+
+		while(filesize>0)
+		{
+			OSD_ProgressBar(c,bits);
+			if(FileRead(&file,sector_buffer))
 			{
 				int i;
-				int *p=(int *)sector_buffer;
-				*p++=dipsw;
-				for(i=0;i<126;++i)	// Clear remainder of buffer
-					*p++=0;
-				FileWrite(&file,sector_buffer);
-			}
-			else if(settings==BOOT_LOADSETTINGS)
-			{
-				FileRead(&file,sector_buffer);
-				dipsw=*(int *)(&sector_buffer[0]);
-				HW_HOST(HW_HOST_SW)=dipsw;
-				SetDIPSwitch(dipsw);
-	//				printf("DIP %d, Vol %d\n",dipsw,GetVolumes());
-			}
-		}
-
-		if((opened=FileOpen(&file,"MSX3BIOSSYS")))	// Try and load MSX3 BIOS first
-		{
-			OSD_Puts("Loading ROM\n");
-			int filesize=file.size;
-			unsigned int c=0;
-			int bits;
-
-			bits=0;
-			c=filesize;
-			while(c)
-			{
-				++bits;
-				c>>=1;
-			}
-			bits-=9;
-
-			if((filesize&0xfff)) // Do we have a header?
-			{
-				filesize-=512;
-				FileNextSector(&file);	// Skip the header		
-			}
-
-			while(filesize>0)
-			{
-				OSD_ProgressBar(c,bits);
-				if(FileRead(&file,sector_buffer))
+				int *p=(int *)&sector_buffer;
+				for(i=0;i<(filesize<512 ? filesize : 512) ;i+=4)
 				{
-					int i;
-					int *p=(int *)&sector_buffer;
-					for(i=0;i<(filesize<512 ? filesize : 512) ;i+=4)
-					{
-						int t=*p++;
-						int t1=t&255;
-						int t2=(t>>8)&255;
-						int t3=(t>>16)&255;
-						int t4=(t>>24)&255;
-						HW_HOST(HW_HOST_BOOTDATA)=t4;
-						HW_HOST(HW_HOST_BOOTDATA)=t3;
-						HW_HOST(HW_HOST_BOOTDATA)=t2;
-						HW_HOST(HW_HOST_BOOTDATA)=t1;
-					}
+					int t=*p++;
+					int t1=t&255;
+					int t2=(t>>8)&255;
+					int t3=(t>>16)&255;
+					int t4=(t>>24)&255;
+					HW_HOST(HW_HOST_BOOTDATA)=t4;
+					HW_HOST(HW_HOST_BOOTDATA)=t3;
+					HW_HOST(HW_HOST_BOOTDATA)=t2;
+					HW_HOST(HW_HOST_BOOTDATA)=t1;
 				}
-				else
-				{
-					OSD_Puts("Read failed\n");
-					return(0);
-				}
-				FileNextSector(&file);
-				filesize-=512;
-				++c;
 			}
-			HW_HOST(HW_HOST_CTRL)=HW_HOST_CTRLF_BOOTDONE;	// Release SD card and early-terminate any remaining requests for boot data
-			return(1);
+			else
+			{
+				OSD_Puts("Read failed\n");
+				return(0);
+			}
+			FileNextSector(&file);
+			filesize-=512;
+			++c;
 		}
+		HW_HOST(HW_HOST_CTRL)=HW_HOST_CTRLF_BOOTDONE;	// Release SD card and early-terminate any remaining requests for boot data
+		return(1);
 	}
 	return(0);
 }
 
 
-static void doreset(enum boot_settings s)
+static void reset(int row)
 {
 	Menu_Hide();
-	OSD_Clear();
-	OSD_Show(1);
-	HW_HOST(HW_HOST_CTRL)=HW_HOST_CTRLF_RESET;	// Put OCMS into Reset
-	PS2Wait();
-	PS2Wait();
-	HW_HOST(HW_HOST_CTRL)=HW_HOST_CTRLF_SDCARD;	// Release reset but steal SD card
-	Boot(s);
-	Menu_Set(topmenu);
-	OSD_Show(0);
+//	OSD_Clear();
+//	OSD_Show(1);
+	// FIXME - perform a core reset here without clearing the SDRAM
+//	Boot(s);
+//	Menu_Set(topmenu);
+//	OSD_Show(0);
 }
 
-static void savereset()
+
+static void selectrom(int row)
 {
-	doreset(BOOT_SAVESETTINGS);
+
 }
 
-static void reset()
+
+static char romfilenames[13][16];
+
+static struct menu_entry rommenu[]=
 {
-	doreset(BOOT_IGNORESETTINGS);
+	{MENU_ENTRY_CALLBACK,romfilenames[0],MENU_ACTION(&selectrom)},
+	{MENU_ENTRY_CALLBACK,romfilenames[1],MENU_ACTION(&selectrom)},
+	{MENU_ENTRY_CALLBACK,romfilenames[2],MENU_ACTION(&selectrom)},
+	{MENU_ENTRY_CALLBACK,romfilenames[3],MENU_ACTION(&selectrom)},
+	{MENU_ENTRY_CALLBACK,romfilenames[4],MENU_ACTION(&selectrom)},
+	{MENU_ENTRY_CALLBACK,romfilenames[5],MENU_ACTION(&selectrom)},
+	{MENU_ENTRY_CALLBACK,romfilenames[6],MENU_ACTION(&selectrom)},
+	{MENU_ENTRY_CALLBACK,romfilenames[7],MENU_ACTION(&selectrom)},
+	{MENU_ENTRY_CALLBACK,romfilenames[8],MENU_ACTION(&selectrom)},
+	{MENU_ENTRY_CALLBACK,romfilenames[9],MENU_ACTION(&selectrom)},
+	{MENU_ENTRY_CALLBACK,romfilenames[10],MENU_ACTION(&selectrom)},
+	{MENU_ENTRY_CALLBACK,romfilenames[11],MENU_ACTION(&selectrom)},
+	{MENU_ENTRY_CALLBACK,romfilenames[12],MENU_ACTION(&selectrom)},
+	{MENU_ENTRY_SUBMENU,"Back",MENU_ACTION(topmenu)},
+	{MENU_ENTRY_NULL,0,0}
+};
+
+
+static void copyname(char *dst,const unsigned char *src)
+{
+	int i;
+	for(i=0;i<11;++i)
+		*dst++=*src++;
+	*dst++=0;
+}
+
+
+static void listroms(int row)
+{
+	int i,j;
+	j=0;
+	for(i=0;(j<12) && (i<dir_entries);++i)
+	{
+		DIRENTRY *p=NextDirEntry(i);
+		if(p)
+			copyname(romfilenames[j++],p->Name);
+	}
+	Menu_Set(rommenu);
 }
 
 
@@ -186,10 +222,11 @@ static char *cart_labels[]=
 static struct menu_entry topmenu[]=
 {
 	{MENU_ENTRY_CALLBACK,"Reset",MENU_ACTION(&reset)},
-	{MENU_ENTRY_CALLBACK,"Save and Reset",MENU_ACTION(&savereset)},
+	{MENU_ENTRY_CALLBACK,"Save settings",MENU_ACTION(&SaveSettings)},
 	{MENU_ENTRY_CYCLE,(char *)video_labels,2},
 	{MENU_ENTRY_TOGGLE,"Scanlines",BIT_SCANLINES},
 	{MENU_ENTRY_CYCLE,(char *)cart_labels,2},
+	{MENU_ENTRY_CALLBACK,"Load ROM \x10",MENU_ACTION(&listroms)},
 	{MENU_ENTRY_CALLBACK,"Exit",MENU_ACTION(&Menu_Hide)},
 	{MENU_ENTRY_NULL,0,0}
 };
@@ -223,7 +260,7 @@ int main(int argc,char **argv)
 {
 	int i;
 	SetDIPSwitch(DEFAULT_DIPSWITCH_SETTINGS);
-	HW_HOST(HW_HOST_CTRL)=HW_HOST_CTRLF_RESET;	// Put OCMS into Reset
+	HW_HOST(HW_HOST_CTRL)=HW_HOST_CTRLF_RESET;	// Put core into Reset
 	HW_HOST(HW_HOST_SW)=DEFAULT_DIPSWITCH_SETTINGS;
 	HW_HOST(HW_HOST_CTRL)=HW_HOST_CTRLF_SDCARD;	// Release reset but steal SD card
 	HW_HOST(HW_HOST_MOUSEBUTTONS)=3;
@@ -238,11 +275,23 @@ int main(int argc,char **argv)
 	PS2Wait();
 	OSD_Show(1);	// OSD should now show correctly.
 
-
-	if(Boot(BOOT_LOADSETTINGS))
+	OSD_Puts("Initializing SD card\n");
+	if(spi_init())
 	{
-		OSD_Show(0);
+		if(!FindDrive())
+		{
+			OSD_Puts("Filesystem error\n");
+			return(0);
+		}
+		LoadSettings();
+
+		if(LoadROM("MSX3BIOSSYS"))
+			OSD_Show(0);
+		else
+			OSD_Puts("ROM loading failed\n");
+
 		Menu_Set(topmenu);
+
 		while(1)
 		{
 			int visible;
@@ -270,9 +319,8 @@ int main(int argc,char **argv)
 	}
 	else
 	{
-		OSD_Puts("Loading BIOS failed\n");
+		OSD_Puts("Card init failed\n");
 	}
-	HW_HOST(HW_HOST_CTRL)=HW_HOST_CTRLF_BOOTDONE;	// Release SD card and early-terminate any remaining requests for boot data
 
 	return(0);
 }

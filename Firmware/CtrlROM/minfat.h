@@ -73,6 +73,7 @@ extern unsigned char sector_buffer[512];
 extern unsigned int cluster_size;
 extern unsigned long cluster_mask;
 extern unsigned int fat32;
+extern unsigned int dir_entries;
 
 // constants
 #define DIRECTORY_ROOT 0
@@ -106,6 +107,8 @@ int FileRead(fileTYPE *file, unsigned char *pBuffer);
 //unsigned char FileReadEx(fileTYPE *file, unsigned char *pBuffer, unsigned long nSize);
 
 int LoadFile(const char *fn, unsigned char *buf);
+
+DIRENTRY *NextDirEntry(int prev); // Must be called in ascending sequence, starting with 0
 
 int IsFat32();
 
