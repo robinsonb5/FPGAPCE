@@ -38,7 +38,7 @@ begin
 	process(clk)
 	begin
 	
-		if rising_edge(clk) then
+--		if rising_edge(clk) then
 			window_out<=window_in;
 			
 			if osd_window_in='1' then
@@ -55,7 +55,7 @@ begin
 				blue_out<=blue_in;
 			end if;
 			
-		end if;
+--		end if;
 	
 	end process;
 

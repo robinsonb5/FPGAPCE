@@ -342,11 +342,11 @@ myvirtualtoplevel : entity work.Virtual_Toplevel
 		spi_mosi => sd_mosi,
 		spi_clk => sd_clk,
 
-		-- Audio - FIXME abstract this out, too.
+		-- Audio
 		signed(DAC_LDATA) => audio_l,
 		signed(DAC_RDATA) => audio_r,
 
-		-- Video, Audio/CMT ports
+		-- Video
 		unsigned(VGA_R) => vga_r,
 		unsigned(VGA_G) => vga_g,
 		unsigned(VGA_B) => vga_b,

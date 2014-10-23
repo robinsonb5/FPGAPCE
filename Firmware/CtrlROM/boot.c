@@ -21,13 +21,9 @@ fileTYPE file;
 static struct menu_entry topmenu[];
 
 
-#define BIT_SDCARD 2
-#define BIT_JAPANESEKEYBOARD 6
-#define BIT_TURBO 7
-#define BIT_MOUSEEMULATION 10
-#define BIT_SCANLINES 11
+#define BIT_SCANLINES 1
 
-#define DEFAULT_DIPSWITCH_SETTINGS 0x238
+#define DEFAULT_DIPSWITCH_SETTINGS 0
 
 void SetVolumes(int v);
 
@@ -88,15 +84,9 @@ static int Boot(enum boot_settings settings)
 			}
 		}
 
-		OSD_Puts("Trying MSX3BIOS.SYS\n");
-		if(!(opened=FileOpen(&file,"MSX3BIOSSYS")))	// Try and load MSX3 BIOS first
+		if((opened=FileOpen(&file,"MSX3BIOSSYS")))	// Try and load MSX3 BIOS first
 		{
-			OSD_Puts("Trying BIOS_M2P.ROM\n");
-			opened=FileOpen(&file,"BIOS_M2PROM"); // If failure, load MSX2 BIOS.
-		}
-		if(opened)
-		{
-			OSD_Puts("Loading BIOS\n");
+			OSD_Puts("Loading ROM\n");
 			int filesize=file.size;
 			unsigned int c=0;
 			int bits;
@@ -109,6 +99,12 @@ static int Boot(enum boot_settings settings)
 				c>>=1;
 			}
 			bits-=9;
+
+			if((filesize&0xfff)) // Do we have a header?
+			{
+				filesize-=512;
+				FileNextSector(&file);	// Skip the header		
+			}
 
 			while(filesize>0)
 			{
@@ -204,7 +200,7 @@ int SetDIPSwitch(int d)
 	struct menu_entry *m;
 	MENU_TOGGLE_VALUES=d&2; // Scanlines
 	m=&topmenu[2]; MENU_CYCLE_VALUE(m)=d&1; // Video mode
-	m=&topmenu[3]; MENU_CYCLE_VALUE(m)=d&4; // Cartridge type
+	m=&topmenu[3]; MENU_CYCLE_VALUE(m)=(d&4 ? 1 : 0); // Cartridge type
 }
 
 
@@ -219,7 +215,7 @@ int GetDIPSwitch()
 	m=&topmenu[3];
 	 	if(MENU_CYCLE_VALUE(m))
 			result|=4;	// Cartridge type
-	return(result); // Invert SD card and Turbo switch
+	return(result);
 }
 
 

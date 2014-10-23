@@ -75,7 +75,7 @@ END entity;
 architecture rtl of DE1_Toplevel is
 
 signal reset : std_logic;
-signal clk21m      : std_logic;
+signal clk42m      : std_logic;
 signal memclk      : std_logic;
 signal pll_locked : std_logic;
 
@@ -152,14 +152,12 @@ hexdigit2 : component SEG7_LUT
 hexdigit3 : component SEG7_LUT
 	port map (oSEG => HEX3, iDIG => hex(15 downto 12));
 
-  U00 : entity work.pll4x2
+  U00 : entity work.pll
     port map(					-- for Altera DE1
-		areset => not KEY(0),
       inclk0 => CLOCK_50,       -- 50 MHz external
-      c0     => clk21m,         -- 21.43MHz internal (50*3/7)
-      c1     => memclk,         -- 85.72MHz = 21.43MHz x 4
-      c2     => DRAM_CLK,        -- 85.72MHz external
-      locked => pll_locked
+      c0     => clk42m,         -- slow clock
+      c1     => memclk,         -- fast clock
+      c2     => DRAM_CLK        -- fast phase shifted for SDRAM
     );
 
 
@@ -169,7 +167,7 @@ myVgaMaster : entity work.video_vga_master
 		)
 		port map (
 			clk => memclk,
-			clkDiv => X"2",	-- 87 Mhz / (2+1) = ~29 Mhz
+			clkDiv => X"3",	-- 100 Mhz / (3+1) = 25 Mhz
 
 			hSync => vga_hsync,
 			vSync => vga_vsync,
@@ -188,11 +186,11 @@ VGA_VS<=vga_vsync;
 
 top : entity work.CtrlModule
 	generic map(
-		sysclk_frequency => 857
+		sysclk_frequency => 1000
 	)
 	port map(
 		clk => memclk,
-		reset_n => pll_locked,
+		reset_n => KEY(0),
 
 		-- SD/MMC slot ports
 		spi_clk => SD_CLK,

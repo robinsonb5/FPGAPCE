@@ -233,11 +233,11 @@ PRE_RESET_N <= reset and SDR_INIT_DONE and host_reset_n;
 
 -- FIXME - take these from the OSD
 -- Header present switch
-HEADER <= SW(1);
--- ROM splitting switch
-SPLIT <= SW(2);
+--HEADER <= SW(1);
 -- Bit flipping switch
-BITFLIP <= SW(3);
+BITFLIP <= SW(2);
+-- ROM splitting switch
+SPLIT <= SW(3);
 
 
 -- I/O
@@ -724,7 +724,7 @@ mycontrolmodule : entity work.CtrlModule
 overlay : entity work.OSD_Overlay
 	port map
 	(
-		clk => CLK,
+		clk => SDR_CLK,
 		red_in => vga_red_i,
 		green_in => vga_green_i,
 		blue_in => vga_blue_i,
