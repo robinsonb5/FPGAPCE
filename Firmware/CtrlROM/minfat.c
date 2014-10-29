@@ -263,10 +263,11 @@ DIRENTRY *NextDirEntry(int prev)
 		sd_read_sector(iDirectorySector, sector_buffer); // root directory is linear
 	}
 	pEntry = (DIRENTRY*)sector_buffer;
+	pEntry+=(prev&0xf);
 	if (pEntry->Name[0] != SLOT_EMPTY && pEntry->Name[0] != SLOT_DELETED) // valid entry??
 	{
 		if (!(pEntry->Attributes & (ATTR_VOLUME | ATTR_DIRECTORY))) // not a volume nor directory
-			return(pEntry+(prev&0xf));
+			return(pEntry);
 	}
 	return((DIRENTRY *)0);
 }

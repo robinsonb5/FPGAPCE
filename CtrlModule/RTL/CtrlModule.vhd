@@ -46,7 +46,7 @@ entity CtrlModule is
 		host_divert_keyboard : out std_logic;
 		
 		-- Host boot data
-		host_bootdata : out std_logic_vector(7 downto 0);
+		host_bootdata : out std_logic_vector(15 downto 0);
 		host_bootdata_req : in std_logic:='0';
 		host_bootdata_ack : out std_logic;
 		
@@ -462,7 +462,7 @@ begin
 							mem_busy<='0';
 							
 						when X"48" => -- Host boot data
-							host_bootdata<=mem_write(7 downto 0);
+							host_bootdata<=mem_write(15 downto 0);
 							host_bootdata_pending<='1';
 --								mem_busy<='0';
 

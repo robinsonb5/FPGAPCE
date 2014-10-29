@@ -9,12 +9,17 @@ use IEEE.NUMERIC_STD.ALL;
 
 
 entity Virtual_Toplevel is
+	generic
+	(
+		colAddrBits : integer := 8;
+		rowAddrBits : integer := 12
+	);
 	port(
 		reset : in std_logic;
 		CLK : in std_logic;
 		SDR_CLK : in std_logic;
 
-		DRAM_ADDR	: out std_logic_vector(11 downto 0);
+		DRAM_ADDR	: out std_logic_vector(rowAddrBits-1 downto 0);
 		DRAM_BA_0	: out std_logic;
 		DRAM_BA_1	: out std_logic;
 		DRAM_CAS_N	: out std_logic;
@@ -54,6 +59,8 @@ entity Virtual_Toplevel is
 end entity;
 
 architecture rtl of Virtual_Toplevel is
+
+constant addrwidth : integer := rowAddrBits+colAddrBits+2;
 
 signal P1_UP		: std_logic;
 signal P1_DOWN		: std_logic;
@@ -195,14 +202,14 @@ signal boot_oe_n	: std_logic;
 
 signal romwr_req : std_logic := '0';
 signal romwr_ack : std_logic;
-signal romwr_a : unsigned((12+8+2) downto 0);
-signal romwr_d : std_logic_vector(7 downto 0);
+signal romwr_a : unsigned(addrwidth downto 1);
+signal romwr_d : std_logic_vector(15 downto 0);
 
 signal romrd_req : std_logic := '0';
 signal romrd_ack : std_logic;
-signal romrd_a : std_logic_vector((12+8+2) downto 3);
+signal romrd_a : std_logic_vector(addrwidth downto 3);
 signal romrd_q : std_logic_vector(63 downto 0);
-signal romrd_a_cached : std_logic_vector((12+8+2) downto 3);
+signal romrd_a_cached : std_logic_vector(addrwidth downto 3);
 signal romrd_q_cached : std_logic_vector(63 downto 0);
 
 signal host_reset_n : std_logic;
@@ -210,8 +217,8 @@ signal host_bootdone : std_logic;
 
 signal boot_req : std_logic;
 signal boot_ack : std_logic;
-signal boot_data : std_logic_vector(7 downto 0);
-signal FL_DQ : std_logic_vector(7 downto 0);
+signal boot_data : std_logic_vector(15 downto 0);
+signal FL_DQ : std_logic_vector(15 downto 0);
 
 signal osd_window : std_logic;
 signal osd_pixel : std_logic;
@@ -387,7 +394,12 @@ VDC : entity work.huc6270 port map(
 -- VDC_RAM_A_FULL <= "00" & "1000" & VDC_RAM_A;
 
 
-SDRC : entity work.sdram_controller port map(
+SDRC : entity work.sdram_controller
+	generic map(
+		colAddrBits => colAddrBits,
+		rowAddrBits => rowAddrBits
+	)
+	port map(
 	clk			=> SDR_CLK,
 	
 	std_logic_vector(sd_data) => DRAM_DQ,
@@ -476,8 +488,10 @@ begin
 		elsif ROM_RESET_N = '1' and RESET_N = '0' then
 			if CPU_CLKRST = '1' then
 				romrd_req <= not romrd_req;
-				romrd_a <= "00" & "0" & CPU_A(19 downto 3);
-				romrd_a_cached <= "00" & "0" & CPU_A(19 downto 3);
+				romrd_a<=(others=>'0');
+				romrd_a(19 downto 3) <= CPU_A(19 downto 3);
+				romrd_a_cached<=(others=>'0');
+				romrd_a_cached(19 downto 3) <= CPU_A(19 downto 3);
 				ROM_RDY <= '0';
 				romState <= ROM_READ;				
 				RESET_N <= '1';
@@ -514,8 +528,10 @@ begin
 							end case;						
 						else
 							romrd_req <= not romrd_req;
-							romrd_a <= "00" & "0" & CPU_A(19 downto 3);
-							romrd_a_cached <= "00" & "0" & CPU_A(19 downto 3);
+							romrd_a<=(others=>'0');
+							romrd_a(19 downto 3) <= CPU_A(19 downto 3);
+							romrd_a_cached<=(others=>'0');
+							romrd_a_cached(19 downto 3) <= CPU_A(19 downto 3);
 							ROM_RDY <= '0';
 							romState <= ROM_READ;
 						end if;
@@ -559,9 +575,9 @@ FL_DQ<=boot_data;
 
 ROM_RESET_N <= host_bootdone and host_reset_n;
 
-process( CLK )
+process( SDR_CLK )
 begin
-	if rising_edge( CLK ) then
+	if rising_edge( SDR_CLK ) then
 		if PRE_RESET_N = '0' then
 --			ROM_RESET_N <= '0';
 				
@@ -574,7 +590,7 @@ begin
 			boot_req <='0';
 			
 			romwr_req <= '0';
-			romwr_a <= to_unsigned(0, 23);
+			romwr_a <= to_unsigned(0, addrwidth);
 			bootState<=BOOT_READ_1;
 			
 		else
@@ -591,7 +607,16 @@ begin
 					end if;
 				when BOOT_WRITE_1 =>
 					if BITFLIP = '1' then
-						romwr_d <= FL_DQ(0)
+						romwr_d <=
+							FL_DQ(8)
+							& FL_DQ(9)
+							& FL_DQ(10)
+							& FL_DQ(11)
+							& FL_DQ(12)
+							& FL_DQ(13)
+							& FL_DQ(14)
+							& FL_DQ(15)
+							& FL_DQ(0)
 							& FL_DQ(1)
 							& FL_DQ(2)
 							& FL_DQ(3)

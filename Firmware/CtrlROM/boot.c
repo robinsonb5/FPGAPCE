@@ -91,7 +91,7 @@ static int LoadROM(const char *filename)
 		int bits;
 
 		bits=0;
-		c=filesize;
+		c=filesize-1;
 		while(c)
 		{
 			++bits;
@@ -114,13 +114,9 @@ static int LoadROM(const char *filename)
 				int *p=(int *)&sector_buffer;
 				for(i=0;i<(filesize<512 ? filesize : 512) ;i+=4)
 				{
-					int t=*p++;
-					int t1=t&255;
-					int t2=(t>>8)&255;
-					int t3=(t>>16)&255;
-					int t4=(t>>24)&255;
-					HW_HOST(HW_HOST_BOOTDATA)=t4;
-					HW_HOST(HW_HOST_BOOTDATA)=t3;
+					unsigned int t=*p++;
+					unsigned int t1=((t&0xff00)>>8)|((t&0xff)<<8);
+					unsigned int t2=((t&0xff000000)>>24)|((t&0xff0000)>>8);
 					HW_HOST(HW_HOST_BOOTDATA)=t2;
 					HW_HOST(HW_HOST_BOOTDATA)=t1;
 				}
@@ -155,7 +151,24 @@ static void reset(int row)
 
 static void selectrom(int row)
 {
-
+	int i;
+	DIRENTRY *p;
+	++row;
+	for(i=0;row;++i)
+	{
+		if((p=NextDirEntry(i)))
+			--row;
+	}
+	if(p)
+	{
+		p->Attributes=0;
+		OSD_Puts("Loading ");
+		OSD_Puts(p->Name);
+		LoadROM(p->Name);
+	}
+	Menu_Set(topmenu);
+	Menu_Hide();
+	OSD_Show(0);
 }
 
 

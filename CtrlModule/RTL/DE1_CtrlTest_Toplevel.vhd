@@ -167,7 +167,7 @@ myVgaMaster : entity work.video_vga_master
 		)
 		port map (
 			clk => memclk,
-			clkDiv => X"3",	-- 100 Mhz / (3+1) = 25 Mhz
+			clkDiv => X"4",	-- 100 Mhz / (3+1) = 25 Mhz
 
 			hSync => vga_hsync,
 			vSync => vga_vsync,

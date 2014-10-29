@@ -7,13 +7,17 @@ use IEEE.NUMERIC_STD.ALL;
 -- -----------------------------------------------------------------------
 
 entity sdram_controller is
+	generic (
+		colAddrBits : integer := 8;
+		rowAddrBits : integer := 12
+	);
 	port (
 		-- System
 		clk : in std_logic;
 
 		-- SDRAM interface
 		sd_data : inout unsigned(15 downto 0);
-		sd_addr : out unsigned((12-1) downto 0);
+		sd_addr : out unsigned((rowAddrBits-1) downto 0);
 		sd_we_n : out std_logic;
 		sd_ras_n : out std_logic;
 		sd_cas_n : out std_logic;
@@ -54,12 +58,13 @@ entity sdram_controller is
 		
 		romwr_req : in std_logic;
 		romwr_ack : out std_logic;
-		romwr_a : in unsigned((12+8+2) downto 0);
-		romwr_d : in std_logic_vector(7 downto 0);
+		romwr_we : in std_logic :='1';
+		romwr_a : in unsigned((rowAddrBits+colAddrBits+2) downto 1);
+		romwr_d : in std_logic_vector(15 downto 0);
 		
 		romrd_req : in std_logic;
 		romrd_ack : out std_logic;
-		romrd_a : in std_logic_vector((12+8+2) downto 3);
+		romrd_a : in std_logic_vector((rowAddrBits+colAddrBits+2) downto 3);
 		romrd_q : out std_logic_vector(63 downto 0);
 
 		
@@ -71,31 +76,29 @@ end entity;
 -- -----------------------------------------------------------------------
 
 architecture rtl of sdram_controller is
-	signal rom_a_u : unsigned((12+8+2) downto 0);
-	signal rom_q_u : unsigned(7 downto 0);
+	constant addrwidth : integer := rowAddrBits+colAddrBits+2;
 
-	signal vdccpu_a_u : unsigned((12+8+2) downto 1);
+	signal vdccpu_a_u : unsigned((addrwidth) downto 1);
 	signal vdccpu_d_u : unsigned(15 downto 0);
 	signal vdccpu_q_u : unsigned(15 downto 0);
 
-	signal vdcbg_a_u : unsigned((12+8+2) downto 1);
+	signal vdcbg_a_u : unsigned((addrwidth) downto 1);
 	signal vdcbg_q_u : unsigned(15 downto 0);
 
-	signal vdcsp_a_u : unsigned((12+8+2) downto 1);
+	signal vdcsp_a_u : unsigned((addrwidth) downto 1);
 	signal vdcsp_q_u : unsigned(15 downto 0);
 
-	signal vdcdma_a_u : unsigned((12+8+2) downto 1);
+	signal vdcdma_a_u : unsigned((addrwidth) downto 1);
 	signal vdcdma_d_u : unsigned(15 downto 0);
 	signal vdcdma_q_u : unsigned(15 downto 0);
 
-	signal vdcdmas_a_u : unsigned((12+8+2) downto 1);
+	signal vdcdmas_a_u : unsigned((addrwidth) downto 1);
 	signal vdcdmas_q_u : unsigned(15 downto 0);
 
-	signal romrd_a_u : unsigned((12+8+2) downto 3);
+	signal romrd_a_u : unsigned((addrwidth) downto 3);
 	signal romrd_q_u : unsigned(63 downto 0);
 
-	signal romwr_d_u : unsigned(7 downto 0);
-	
+	signal romwr_d_u : unsigned(15 downto 0);
 begin
 	
 	romrd_a_u <= unsigned(romrd_a);
@@ -103,21 +106,26 @@ begin
 	
 	romwr_d_u <= unsigned(romwr_d);
 	
-	vdccpu_a_u <= unsigned("00" & "1000" & vdccpu_a);
+	vdccpu_a_u(addrwidth downto 21)<=(others=>'0');
+	vdccpu_a_u(20 downto 1) <= unsigned("1000" & vdccpu_a);
 	vdccpu_d_u <= unsigned(vdccpu_d);
 	vdccpu_q <= std_logic_vector(vdccpu_q_u);
 	
-	vdcbg_a_u <= unsigned("00" & "1000" & vdcbg_a);
+	vdcbg_a_u(addrwidth downto 21)<=(others=>'0');
+	vdcbg_a_u(20 downto 1) <= unsigned("1000" & vdcbg_a);
 	vdcbg_q <= std_logic_vector(vdcbg_q_u);
 	
-	vdcsp_a_u <= unsigned("00" & "1000" & vdcsp_a);
+	vdcsp_a_u(addrwidth downto 21)<=(others=>'0');
+	vdcsp_a_u(20 downto 1) <= unsigned("1000" & vdcsp_a);
 	vdcsp_q <= std_logic_vector(vdcsp_q_u);
 
-	vdcdma_a_u <= unsigned("00" & "1000" & vdcdma_a);
+	vdcdma_a_u(addrwidth downto 21)<=(others=>'0');
+	vdcdma_a_u(20 downto 1) <= unsigned("1000" & vdcdma_a);
 	vdcdma_d_u <= unsigned(vdcdma_d);
 	vdcdma_q <= std_logic_vector(vdcdma_q_u);
 
-	vdcdmas_a_u <= unsigned("00" & "1000" & vdcdmas_a);
+	vdcdmas_a_u(addrwidth downto 21)<=(others=>'0');
+	vdcdmas_a_u(20 downto 1) <= unsigned("1000" & vdcdmas_a);
 	vdcdmas_q <= std_logic_vector(vdcdmas_q_u);
 	
 -- -----------------------------------------------------------------------
@@ -127,8 +135,8 @@ begin
 		generic map (
 			casLatency => 2,
 --			casLatency => 3,
-			colAddrBits => 8,
-			rowAddrBits => 12,
+			colAddrBits => colAddrBits,
+			rowAddrBits => rowAddrBits,
 --			t_ck_ns => 10.0
 --			t_ck_ns => 6.7
 			t_ck_ns => 11.7
@@ -222,6 +230,7 @@ begin
 			
 			romwr_req => romwr_req,
 			romwr_ack => romwr_ack,
+			romwr_we => romwr_we,
 			romwr_a => romwr_a,
 			romwr_d => romwr_d_u,
 			
