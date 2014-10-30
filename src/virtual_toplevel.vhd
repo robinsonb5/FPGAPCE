@@ -342,7 +342,7 @@ VCE : entity work.huc6260 port map(
 
 VDC : entity work.huc6270 port map(
 	CLK 		=> CLK,
-	SDR_CLK		=> SDR_CLK,
+--	SDR_CLK		=> SDR_CLK,
 	RESET_N		=> RESET_N,
 
 	-- CPU Interface

@@ -14,7 +14,6 @@ use IEEE.NUMERIC_STD.ALL;
 entity huc6270 is
 	port (
 		CLK 		: in std_logic;
-		SDR_CLK		: in std_logic;
 		RESET_N		: in std_logic;
 
 		-- CPU Interface
@@ -422,6 +421,10 @@ type dmas_t is (	DMAS_IDLE,
 					DMAS_END );
 signal DMAS	: dmas_t;
 
+
+constant speedUpSp	: boolean := true;
+constant speedUpBg	: boolean := true;
+
 begin
 
 --------------------------------------------------------------------------------
@@ -782,7 +785,7 @@ begin
 				end if;
 			
 			when BG1_INI_W =>
-				if CLKEN = '1' then
+				if speedUpBg or CLKEN = '1' then
 					case BG_DW is
 					when "00" =>
 						BG1 <= BG1_CPU;
@@ -800,7 +803,7 @@ begin
 			when BG1_CPU_W =>
 				BG_BUSY <= '1';
 				
-				if CLKEN = '1' then
+				if speedUpBg or CLKEN = '1' then
 					BG_CYC <= BG_CYC + 1;
 					case BG_DW is
 					when "00" =>
@@ -838,7 +841,7 @@ begin
 				BG1 <= BG1_BAT_W;
 				
 			when BG1_BAT_W =>
-				if CLKEN = '1' and BG_RAM_REQ_FF = BG_RAM_ACK then
+				if (speedUpBg or CLKEN = '1') and BG_RAM_REQ_FF = BG_RAM_ACK then
 					
 					BG_PAL <= BG_RAM_DO(15 downto 12);
 					BG_RAM_A_FF <= BG_RAM_DO(11 downto 0) & "0" & BG_Y(2 downto 0);
@@ -861,7 +864,7 @@ begin
 				BG1 <= BG1_NOP_W;
 			
 			when BG1_NOP_W =>
-				if CLKEN = '1' then
+				if speedUpBg or CLKEN = '1' then
 					BG_CYC <= BG_CYC + 1;
 					BG1 <= BG1_CPU;
 				end if;
@@ -871,7 +874,7 @@ begin
 				BG1 <= BG1_CG0_W;
 			
 			when BG1_CG0_W =>
-				if CLKEN = '1' and BG_RAM_REQ_FF = BG_RAM_ACK then
+				if (speedUpBg or CLKEN = '1') and BG_RAM_REQ_FF = BG_RAM_ACK then
 					BG_P01 <= BG_RAM_DO;
 					
 					BG_CYC <= BG_CYC + 1;
@@ -895,7 +898,7 @@ begin
 				BG1 <= BG1_CG1_W;
 
 			when BG1_CG1_W =>				
-				if CLKEN = '1' and BG_RAM_REQ_FF = BG_RAM_ACK then					
+				if (speedUpBg or CLKEN = '1') and BG_RAM_REQ_FF = BG_RAM_ACK then					
 					if BG_DW = "11" and BG_CM = '0' then
 						BG_P01 <= BG_RAM_DO;
 					else
@@ -1245,7 +1248,7 @@ begin
 				end if;
 
 			when SP2_INI_W =>
-				if CLKEN = '1' then
+				if speedUpSp or CLKEN = '1' then
 					if SP_NB /= "00000" then
 						SP2 <= SP2_RD0;
 					else
@@ -1282,7 +1285,7 @@ begin
 				end if;
 			
 			when SP2_RD0_W =>
-				if CLKEN = '1' and SP_RAM_REQ_FF = SP_RAM_ACK then
+				if (speedUpSp or CLKEN = '1') and SP_RAM_REQ_FF = SP_RAM_ACK then
 					if SP2_ACTIVE = '0' then
 						SP2 <= SP2_END;					
 					else
@@ -1323,7 +1326,7 @@ begin
 				end if;
 				
 			when SP2_RD1_W =>
-				if CLKEN = '1' and SP_RAM_REQ_FF = SP_RAM_ACK then
+				if (speedUpSp or CLKEN = '1') and SP_RAM_REQ_FF = SP_RAM_ACK then
 					if SP2_ACTIVE = '0' then
 						SP2 <= SP2_END;					
 					else
@@ -1355,7 +1358,7 @@ begin
 				end if;
 				
 			when SP2_RD2_W =>
-				if CLKEN = '1' and SP_RAM_REQ_FF = SP_RAM_ACK then
+				if (speedUpSp or CLKEN = '1') and SP_RAM_REQ_FF = SP_RAM_ACK then
 					if SP2_ACTIVE = '0' then
 						SP2 <= SP2_END;					
 					else
@@ -1391,7 +1394,7 @@ begin
 				end if;
 				
 			when SP2_RD3_W =>
-				if CLKEN = '1' and SP_RAM_REQ_FF = SP_RAM_ACK then
+				if (speedUpSp or CLKEN = '1') and SP_RAM_REQ_FF = SP_RAM_ACK then
 					if SP2_ACTIVE = '0' then
 						SP2 <= SP2_END;					
 					else
@@ -2006,14 +2009,14 @@ SATB <= x"0000";
 				end if;
 			
 			when CPU_RAM_PRE_RD =>
-				if SP_BUSY = '0' 
-				and BG_BUSY = '0'
-				and DMAS_BUSY = '0'
-				and DMA_BUSY = '0'
-				then
+				-- if SP_BUSY = '0' 
+				-- and BG_BUSY = '0'
+				-- and DMAS_BUSY = '0'
+				-- and DMA_BUSY = '0'
+				-- then
 					CPU_RAM_REQ_FF <= not CPU_RAM_REQ_FF;
 					CPU <= CPU_RAM_RD;
-				end if;
+				-- end if;
 			
 			when CPU_RAM_RD =>
 				if CPU_RAM_ACK = CPU_RAM_REQ_FF then

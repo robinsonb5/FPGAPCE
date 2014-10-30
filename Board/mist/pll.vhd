@@ -154,17 +154,17 @@ BEGIN
 	altpll_component : altpll
 	GENERIC MAP (
 		bandwidth_type => "AUTO",
-		clk0_divide_by => 5,
+		clk0_divide_by => 9,
 		clk0_duty_cycle => 50,
-		clk0_multiply_by => 8,
+		clk0_multiply_by => 14,
 		clk0_phase_shift => "0",
-		clk1_divide_by => 5,
+		clk1_divide_by => 3,
 		clk1_duty_cycle => 50,
-		clk1_multiply_by => 16,
+		clk1_multiply_by => 14,
 		clk1_phase_shift => "0",
-		clk2_divide_by => 5,
+		clk2_divide_by => 3,
 		clk2_duty_cycle => 50,
-		clk2_multiply_by => 16,
+		clk2_multiply_by => 14,
 		clk2_phase_shift => "-1000",
 		compensate_clock => "CLK0",
 		inclk0_input_frequency => 37037,
@@ -246,15 +246,15 @@ END SYN;
 -- Retrieval info: PRIVATE: CUR_DEDICATED_CLK STRING "c0"
 -- Retrieval info: PRIVATE: CUR_FBIN_CLK STRING "e0"
 -- Retrieval info: PRIVATE: DEVICE_SPEED_GRADE STRING "7"
--- Retrieval info: PRIVATE: DIV_FACTOR0 NUMERIC "5"
--- Retrieval info: PRIVATE: DIV_FACTOR1 NUMERIC "5"
--- Retrieval info: PRIVATE: DIV_FACTOR2 NUMERIC "5"
+-- Retrieval info: PRIVATE: DIV_FACTOR0 NUMERIC "9"
+-- Retrieval info: PRIVATE: DIV_FACTOR1 NUMERIC "9"
+-- Retrieval info: PRIVATE: DIV_FACTOR2 NUMERIC "9"
 -- Retrieval info: PRIVATE: DUTY_CYCLE0 STRING "50.00000000"
 -- Retrieval info: PRIVATE: DUTY_CYCLE1 STRING "50.00000000"
 -- Retrieval info: PRIVATE: DUTY_CYCLE2 STRING "50.00000000"
--- Retrieval info: PRIVATE: EFF_OUTPUT_FREQ_VALUE0 STRING "43.200001"
--- Retrieval info: PRIVATE: EFF_OUTPUT_FREQ_VALUE1 STRING "86.400002"
--- Retrieval info: PRIVATE: EFF_OUTPUT_FREQ_VALUE2 STRING "86.400002"
+-- Retrieval info: PRIVATE: EFF_OUTPUT_FREQ_VALUE0 STRING "42.000000"
+-- Retrieval info: PRIVATE: EFF_OUTPUT_FREQ_VALUE1 STRING "126.000000"
+-- Retrieval info: PRIVATE: EFF_OUTPUT_FREQ_VALUE2 STRING "126.000000"
 -- Retrieval info: PRIVATE: EXPLICIT_SWITCHOVER_COUNTER STRING "0"
 -- Retrieval info: PRIVATE: EXT_FEEDBACK_RADIO STRING "0"
 -- Retrieval info: PRIVATE: GLOCKED_COUNTER_EDIT_CHANGED STRING "1"
@@ -281,9 +281,9 @@ END SYN;
 -- Retrieval info: PRIVATE: MIRROR_CLK0 STRING "0"
 -- Retrieval info: PRIVATE: MIRROR_CLK1 STRING "0"
 -- Retrieval info: PRIVATE: MIRROR_CLK2 STRING "0"
--- Retrieval info: PRIVATE: MULT_FACTOR0 NUMERIC "8"
--- Retrieval info: PRIVATE: MULT_FACTOR1 NUMERIC "16"
--- Retrieval info: PRIVATE: MULT_FACTOR2 NUMERIC "16"
+-- Retrieval info: PRIVATE: MULT_FACTOR0 NUMERIC "14"
+-- Retrieval info: PRIVATE: MULT_FACTOR1 NUMERIC "42"
+-- Retrieval info: PRIVATE: MULT_FACTOR2 NUMERIC "42"
 -- Retrieval info: PRIVATE: NORMAL_MODE_RADIO STRING "1"
 -- Retrieval info: PRIVATE: OUTPUT_FREQ0 STRING "42.85000000"
 -- Retrieval info: PRIVATE: OUTPUT_FREQ1 STRING "100.00000000"
@@ -340,17 +340,17 @@ END SYN;
 -- Retrieval info: PRIVATE: ZERO_DELAY_RADIO STRING "0"
 -- Retrieval info: LIBRARY: altera_mf altera_mf.altera_mf_components.all
 -- Retrieval info: CONSTANT: BANDWIDTH_TYPE STRING "AUTO"
--- Retrieval info: CONSTANT: CLK0_DIVIDE_BY NUMERIC "5"
+-- Retrieval info: CONSTANT: CLK0_DIVIDE_BY NUMERIC "9"
 -- Retrieval info: CONSTANT: CLK0_DUTY_CYCLE NUMERIC "50"
--- Retrieval info: CONSTANT: CLK0_MULTIPLY_BY NUMERIC "8"
+-- Retrieval info: CONSTANT: CLK0_MULTIPLY_BY NUMERIC "14"
 -- Retrieval info: CONSTANT: CLK0_PHASE_SHIFT STRING "0"
--- Retrieval info: CONSTANT: CLK1_DIVIDE_BY NUMERIC "5"
+-- Retrieval info: CONSTANT: CLK1_DIVIDE_BY NUMERIC "3"
 -- Retrieval info: CONSTANT: CLK1_DUTY_CYCLE NUMERIC "50"
--- Retrieval info: CONSTANT: CLK1_MULTIPLY_BY NUMERIC "16"
+-- Retrieval info: CONSTANT: CLK1_MULTIPLY_BY NUMERIC "14"
 -- Retrieval info: CONSTANT: CLK1_PHASE_SHIFT STRING "0"
--- Retrieval info: CONSTANT: CLK2_DIVIDE_BY NUMERIC "5"
+-- Retrieval info: CONSTANT: CLK2_DIVIDE_BY NUMERIC "3"
 -- Retrieval info: CONSTANT: CLK2_DUTY_CYCLE NUMERIC "50"
--- Retrieval info: CONSTANT: CLK2_MULTIPLY_BY NUMERIC "16"
+-- Retrieval info: CONSTANT: CLK2_MULTIPLY_BY NUMERIC "14"
 -- Retrieval info: CONSTANT: CLK2_PHASE_SHIFT STRING "-1000"
 -- Retrieval info: CONSTANT: COMPENSATE_CLOCK STRING "CLK0"
 -- Retrieval info: CONSTANT: INCLK0_INPUT_FREQUENCY NUMERIC "37037"
