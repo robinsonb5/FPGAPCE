@@ -48,8 +48,10 @@ entity Virtual_Toplevel is
 		ps2k_clk_in : in std_logic;
 		ps2k_dat_in : in std_logic;
 		
-		joya : in std_logic_vector(5 downto 0);
-		joyb : in std_logic_vector(5 downto 0);
+		joya : in std_logic_vector(7 downto 0);
+		joyb : in std_logic_vector(7 downto 0);
+		gp1_run : in std_logic := '1';
+		gp1_select : in std_logic := '1';
 
 		spi_miso		: in std_logic := '1';
 		spi_mosi		: out std_logic;
@@ -62,27 +64,10 @@ architecture rtl of Virtual_Toplevel is
 
 constant addrwidth : integer := rowAddrBits+colAddrBits+2;
 
-signal P1_UP		: std_logic;
-signal P1_DOWN		: std_logic;
-signal P1_LEFT		: std_logic;
-signal P1_RIGHT		: std_logic;
-signal P1_SELECT	: std_logic;
-signal P1_RUN		: std_logic;
-signal P1_II		: std_logic;
-signal P1_I			: std_logic;		
-
 -- signal GPIO_CLKCNT	: std_logic_vector(15 downto 0);
 signal GPIO_CLKCNT	: unsigned(15 downto 0);
 
 signal GPIO_SEL		: std_logic;
-signal GP1_UP		: std_logic;
-signal GP1_DOWN		: std_logic;
-signal GP1_LEFT		: std_logic;
-signal GP1_RIGHT	: std_logic;
-signal GP1_SELECT	: std_logic;
-signal GP1_RUN		: std_logic;
-signal GP1_II		: std_logic;
-signal GP1_I		: std_logic;		
 
 signal HEXVALUE		: std_logic_vector(15 downto 0);
 
@@ -249,16 +234,6 @@ SPLIT <= SW(3);
 
 -- I/O
 -- GPIO_1 <= (others => 'Z');
-
-P1_UP		<= not SW(9);
-P1_DOWN		<= not SW(8);
-P1_LEFT		<= not SW(7);
-P1_RIGHT	<= not SW(6);
-
-P1_SELECT	<= KEY(3);
-P1_RUN		<= KEY(2);
-P1_II		<= KEY(1);
-P1_I		<= KEY(0);
 
 
 --------------------------------------------------------------------------------
@@ -684,21 +659,11 @@ end process;
 
 -- I/O Port
 CPU_IO_DI(7 downto 4) <= "1011"; -- No CD-Rom unit, TGFX-16
-CPU_IO_DI(3 downto 0) <= P1_RUN & P1_SELECT & P1_II & P1_I when CPU_IO_DO(1 downto 0) = "00" and SW(5) = '0'
-	else P1_LEFT & P1_RIGHT & P1_DOWN & P1_UP when CPU_IO_DO(1 downto 0) = "01" and SW(5) = '0'
-	else GP1_RUN & GP1_SELECT & GP1_II & GP1_I when CPU_IO_DO(1 downto 0) = "00" and SW(5) = '1'
-	else GP1_LEFT & GP1_RIGHT & GP1_DOWN & GP1_UP when CPU_IO_DO(1 downto 0) = "01" and SW(5) = '1'
+CPU_IO_DI(3 downto 0) <= joya(7 downto 4) when CPU_IO_DO(1 downto 0) = "00" and SW(5) = '0'
+	else joya(3 downto 0) when CPU_IO_DO(1 downto 0) = "01" and SW(5) = '0'
+	else joyb(7 downto 4) when CPU_IO_DO(1 downto 0) = "00" and SW(5) = '1'
+	else joyb(3 downto 0) when CPU_IO_DO(1 downto 0) = "01" and SW(5) = '1'
 	else "0000";
-
-GP1_RUN <='1';
-GP1_SELECT <='1';
-GP1_DOWN <='1';
-GP1_UP <='1';
-GP1_LEFT <='1';
-GP1_RIGHT <='1';
-GP1_I <='1';
-GP1_II <='1';
-
 
 -- Control module:
 
