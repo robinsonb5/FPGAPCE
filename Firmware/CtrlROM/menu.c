@@ -99,12 +99,30 @@ int Menu_Run()
 		TestKey(KEY_DOWNARROW);
 		TestKey(KEY_LEFTARROW);
 		TestKey(KEY_RIGHTARROW);
-		return;
+		TestKey(KEY_PAGEUP);
+		TestKey(KEY_PAGEDOWN);
+	return;
 	}
-	if((TestKey(KEY_UPARROW)&2)&&currentrow)
-		--currentrow;
-	if((TestKey(KEY_DOWNARROW)&2)&&(currentrow<(menurows-1)))
-		++currentrow;
+
+	if(TestKey(KEY_UPARROW)&2)
+	{
+		if(currentrow)
+			--currentrow;
+		else if((m+menurows)->action)
+			MENU_ACTION_CALLBACK((m+menurows)->action)(ROW_LINEUP);
+	}
+	if(TestKey(KEY_DOWNARROW)&2)
+	{
+		if(currentrow<(menurows-1))
+			++currentrow;
+		else if((m+menurows)->action)
+			MENU_ACTION_CALLBACK((m+menurows)->action)(ROW_LINEDOWN);
+	}
+
+	if(TestKey(KEY_PAGEUP)&2)
+		currentrow=0;
+	if(TestKey(KEY_PAGEDOWN)&2)
+		currentrow=menurows-1;
 
 	// Find the currently highlighted menu item
 	i=currentrow;

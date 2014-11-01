@@ -114,16 +114,16 @@ void OSD_Show(int visible)
 	hh<<=4;
 	vh<<=3;
 
-	if(hh>800)
+	if(hh>1000)
 		pixelclock=3;
 	else
 		pixelclock=2;
 
-	HW_OSD(REG_OSD_PIXELCLOCK)=(1<<pixelclock)-1;
+	HW_OSD(REG_OSD_PIXELCLOCK)=(1<<pixelclock);
 
 //	printf("Frame width is %d, frame height is %d\n",hh,vh);
 
-	hl=((hh-100)-80)>>(pixelclock-1);
+	hl=((hh-100)-120)>>(pixelclock-1);
 	vl=((vh-60)-48)/2;
 
 //	printf("OSD Offsets: %d, %d\n",hl,vl);

@@ -1,7 +1,19 @@
 #ifndef MENU_H
 #define MENU_H
 
-enum menu_entry_type {MENU_ENTRY_NULL,MENU_ENTRY_TOGGLE,MENU_ENTRY_CALLBACK,MENU_ENTRY_CYCLE,MENU_ENTRY_SUBMENU,MENU_ENTRY_SLIDER};
+enum menu_entry_type {
+	MENU_ENTRY_NULL,
+	MENU_ENTRY_TOGGLE,
+	MENU_ENTRY_CALLBACK,
+	MENU_ENTRY_CYCLE,
+	MENU_ENTRY_SUBMENU,
+	MENU_ENTRY_SLIDER
+};
+
+#define ROW_LINEUP -1
+#define ROW_LINEDOWN -2
+#define ROW_PAGEUP -3
+#define ROW_PAGEDOWN -4
 
 typedef int menu_action;
 #define MENU_ACTION(x) ((int)(x))

@@ -660,9 +660,9 @@ end process;
 -- I/O Port
 CPU_IO_DI(7 downto 4) <= "1011"; -- No CD-Rom unit, TGFX-16
 CPU_IO_DI(3 downto 0) <= joya(7 downto 4) when CPU_IO_DO(1 downto 0) = "00" and SW(5) = '0'
-	else joya(3 downto 0) when CPU_IO_DO(1 downto 0) = "01" and SW(5) = '0'
+	else joya(2) & joya(1) & joya(3) & joya(0) when CPU_IO_DO(1 downto 0) = "01" and SW(5) = '0'
 	else joyb(7 downto 4) when CPU_IO_DO(1 downto 0) = "00" and SW(5) = '1'
-	else joyb(3 downto 0) when CPU_IO_DO(1 downto 0) = "01" and SW(5) = '1'
+	else joyb(2) & joyb(1) & joyb(3) & joyb(0) when CPU_IO_DO(1 downto 0) = "01" and SW(5) = '1'
 	else "0000";
 
 -- Control module:

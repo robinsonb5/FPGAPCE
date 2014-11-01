@@ -172,6 +172,44 @@ static void selectrom(int row)
 }
 
 
+static void copyname(char *dst,const unsigned char *src)
+{
+	int i;
+	for(i=0;i<11;++i)
+		*dst++=*src++;
+	*dst++=0;
+}
+
+
+static int romindex=0;
+static int romcount;
+
+static void listroms();
+
+static void scrollroms(int row)
+{
+	switch(row)
+	{
+		case ROW_LINEUP:
+			if(romindex)
+				--romindex;
+			break;
+		case ROW_PAGEUP:
+			romindex-=16;
+			if(romindex<0)
+				romindex=0;
+			break;
+		case ROW_LINEDOWN:
+			++romindex;
+			break;
+		case ROW_PAGEDOWN:
+			romindex+=16;
+			break;
+	}
+	listroms();
+	Menu_Draw();
+}
+
 static char romfilenames[13][16];
 
 static struct menu_entry rommenu[]=
@@ -190,29 +228,34 @@ static struct menu_entry rommenu[]=
 	{MENU_ENTRY_CALLBACK,romfilenames[11],MENU_ACTION(&selectrom)},
 	{MENU_ENTRY_CALLBACK,romfilenames[12],MENU_ACTION(&selectrom)},
 	{MENU_ENTRY_SUBMENU,"Back",MENU_ACTION(topmenu)},
-	{MENU_ENTRY_NULL,0,0}
+	{MENU_ENTRY_NULL,0,MENU_ACTION(scrollroms)}
 };
 
-
-static void copyname(char *dst,const unsigned char *src)
-{
-	int i;
-	for(i=0;i<11;++i)
-		*dst++=*src++;
-	*dst++=0;
-}
-
-
-static void listroms(int row)
+static void listroms()
 {
 	int i,j;
 	j=0;
-	for(i=0;(j<12) && (i<dir_entries);++i)
+	for(i=0;(j<romindex) && (i<dir_entries);++i)
+	{
+		DIRENTRY *p=NextDirEntry(i);
+		if(p)
+			++j;
+	}
+
+	for(j=0;(j<12) && (i<dir_entries);++i)
 	{
 		DIRENTRY *p=NextDirEntry(i);
 		if(p)
 			copyname(romfilenames[j++],p->Name);
+		else
+			romfilenames[j][0]=0;
 	}
+}
+
+static void showrommenu(int row)
+{
+	romindex=0;
+	listroms();
 	Menu_Set(rommenu);
 }
 
@@ -239,7 +282,7 @@ static struct menu_entry topmenu[]=
 	{MENU_ENTRY_CYCLE,(char *)video_labels,2},
 	{MENU_ENTRY_TOGGLE,"Scanlines",BIT_SCANLINES},
 	{MENU_ENTRY_CYCLE,(char *)cart_labels,2},
-	{MENU_ENTRY_CALLBACK,"Load ROM \x10",MENU_ACTION(&listroms)},
+	{MENU_ENTRY_CALLBACK,"Load ROM \x10",MENU_ACTION(&showrommenu)},
 	{MENU_ENTRY_CALLBACK,"Exit",MENU_ACTION(&Menu_Hide)},
 	{MENU_ENTRY_NULL,0,0}
 };
@@ -289,50 +332,56 @@ int main(int argc,char **argv)
 	OSD_Show(1);	// OSD should now show correctly.
 
 	OSD_Puts("Initializing SD card\n");
-	if(spi_init())
+	i=5;
+	while(--i>0)
 	{
-		if(!FindDrive())
-		{
-			OSD_Puts("Filesystem error\n");
-			return(0);
-		}
-		LoadSettings();
-
-		if(LoadROM("MSX3BIOSSYS"))
-			OSD_Show(0);
-		else
-			OSD_Puts("ROM loading failed\n");
-
-		Menu_Set(topmenu);
-
-		while(1)
-		{
-			int visible;
-			static int prevds;
-
-			HandlePS2RawCodes();
-			visible=Menu_Run();
-			HW_HOST(HW_HOST_SW)=GetDIPSwitch();
-			if(GetDIPSwitch()!=prevds)
-			{
-				int i;
-				prevds=GetDIPSwitch();
-				for(i=0;i<5;++i)
-				{
-					OSD_Show(visible);	// Refresh OSD position
-					PS2Wait();
-					PS2Wait();
-				}
-			}
-			if(visible)
-				HW_HOST(HW_HOST_CTRL)=HW_HOST_CTRLF_BOOTDONE|HW_HOST_CTRLF_KEYBOARD;	// capture keyboard
-			else					
-				HW_HOST(HW_HOST_CTRL)=HW_HOST_CTRLF_BOOTDONE;	// release keyboard
-		}
+		spi_init();
+		if(FindDrive())
+			i=-1;
 	}
-	else
+	if(!i)	// Did we escape the loop?
 	{
 		OSD_Puts("Card init failed\n");
+		return(0);
+	}
+
+
+	LoadSettings();
+
+	if(LoadROM("BOOT    PCE"))
+	{
+		Menu_Set(topmenu);
+		OSD_Show(0);
+	}
+	else	// If we couldn't load boot.pce then we drop into the file selector...
+	{
+		showrommenu(0);
+		Menu_Show();
+	}
+
+	while(1)
+	{
+		int visible;
+		static int prevds;
+
+		HandlePS2RawCodes();
+		visible=Menu_Run();
+		HW_HOST(HW_HOST_SW)=GetDIPSwitch();
+		if(GetDIPSwitch()!=prevds)
+		{
+			int i;
+			prevds=GetDIPSwitch();
+			for(i=0;i<5;++i)
+			{
+				OSD_Show(visible);	// Refresh OSD position
+				PS2Wait();
+				PS2Wait();
+			}
+		}
+		if(visible)
+			HW_HOST(HW_HOST_CTRL)=HW_HOST_CTRLF_BOOTDONE|HW_HOST_CTRLF_KEYBOARD;	// capture keyboard
+		else					
+			HW_HOST(HW_HOST_CTRL)=HW_HOST_CTRLF_BOOTDONE;	// release keyboard
 	}
 
 	return(0);
