@@ -218,6 +218,12 @@ signal ROM_DO	: std_logic_vector(7 downto 0);
 signal SW : std_logic_vector(11 downto 0);
 signal KEY : std_logic_vector(3 downto 0);
 
+signal gp1emu : std_logic_vector(7 downto 0);
+signal gp2emu : std_logic_vector(7 downto 0);
+
+signal joya_merged : std_logic_vector(7 downto 0);
+signal joyb_merged : std_logic_vector(7 downto 0);
+
 begin
 
 -- Reset
@@ -285,7 +291,7 @@ RAM : entity work.ram port map(
 
 VCE : entity work.huc6260 port map(
 	CLK 		=> CLK,
-	RESET_N		=> '1', -- RESET_N,  -- Allow 6260 to emit sync signals even during reset.
+	RESET_N		=> RESET_N,  -- Allow 6260 to emit sync signals even during reset.
 
 	-- CPU Interface
 	A			=> CPU_A(2 downto 0),
@@ -657,12 +663,15 @@ begin
 	end if;
 end process;
 
+joya_merged <= joya and gp1emu;
+joyb_merged <= joyb and gp2emu;
+
 -- I/O Port
 CPU_IO_DI(7 downto 4) <= "1011"; -- No CD-Rom unit, TGFX-16
-CPU_IO_DI(3 downto 0) <= joya(7 downto 4) when CPU_IO_DO(1 downto 0) = "00" and SW(5) = '0'
-	else joya(2) & joya(1) & joya(3) & joya(0) when CPU_IO_DO(1 downto 0) = "01" and SW(5) = '0'
-	else joyb(7 downto 4) when CPU_IO_DO(1 downto 0) = "00" and SW(5) = '1'
-	else joyb(2) & joyb(1) & joyb(3) & joyb(0) when CPU_IO_DO(1 downto 0) = "01" and SW(5) = '1'
+CPU_IO_DI(3 downto 0) <= joya_merged(7 downto 4) when CPU_IO_DO(1 downto 0) = "00" and SW(5) = '0'
+	else joya_merged(2) & joya_merged(1) & joya_merged(3) & joya_merged(0) when CPU_IO_DO(1 downto 0) = "01" and SW(5) = '0'
+	else joyb_merged(7 downto 4) when CPU_IO_DO(1 downto 0) = "00" and SW(5) = '1'
+	else joyb_merged(2) & joyb_merged(1) & joyb_merged(3) & joyb_merged(0) when CPU_IO_DO(1 downto 0) = "01" and SW(5) = '1'
 	else "0000";
 
 -- Control module:
@@ -707,7 +716,11 @@ mycontrolmodule : entity work.CtrlModule
 		vga_hsync => vga_hsync_i,
 		vga_vsync => vga_vsync_i,
 		osd_window => osd_window,
-		osd_pixel => osd_pixel
+		osd_pixel => osd_pixel,
+		
+		-- Gamepad emulation
+		gp1emu => gp1emu,
+		gp2emu => gp2emu
 );
 
 

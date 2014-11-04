@@ -108,7 +108,13 @@ signal SL1_WE		: std_logic;
 signal SL0_DO		: std_logic_vector(8 downto 0);
 signal SL1_DO		: std_logic_vector(8 downto 0);
 
+signal reset_int : std_logic; -- We need to disable reset for part of this component
+										-- to keep the display alive, otherwise the OSD won't be
+										-- visible!  -- AMR
+
 begin
+
+reset_int<='1';
 
 -- Color RAM
 ram : entity work.colram port map(
@@ -224,7 +230,7 @@ end process;
 process( CLK )
 begin
 	if rising_edge( CLK ) then
-		if RESET_N = '0' then
+		if reset_int = '0' then
 			H_CNT <= (others => '0');
 			VGA_H_CNT <= (others => '0');
 			VGA_V_CNT <= (others => '0');
@@ -276,7 +282,7 @@ end process;
 process( CLK )
 begin
 	if rising_edge( CLK ) then
-		if RESET_N = '0' then
+		if reset_int = '0' then
 			HS_N_FF <= '0';
 			VGA_HS_N_FF <= '0';
 		else
@@ -300,7 +306,7 @@ end process;
 process( CLK )
 begin
 	if rising_edge( CLK ) then
-		if RESET_N = '0' then
+		if reset_int = '0' then
 			VS_N_FF <= '0';
 			VGA_VS_N_FF <= '0';
 		else
@@ -326,7 +332,7 @@ end process;
 process( CLK )
 begin
 	if rising_edge( CLK ) then
-		if RESET_N = '0' then
+		if reset_int = '0' then
 			COLOR_BL <= (others => '0');
 			BL_N <= '0';
 		else

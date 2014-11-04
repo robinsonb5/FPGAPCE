@@ -1,6 +1,6 @@
 -- Interrupt Controller
 -- Copyright © 2013 by Alastair M. Robinson
--- Released under the terms of the GNU General Public License
+-- Released under the terms of the GNU Lesser General Public License
 -- version 3 or later.
 
 library IEEE;

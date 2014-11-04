@@ -30,6 +30,18 @@
 #define KEY_SPACE 0x29
 #define KEY_ESC 0x76
 
+#define KEY_A 0x1c
+#define KEY_D 0x23
+#define KEY_W 0x1d
+#define KEY_S 0x1b
+#define KEY_LSHIFT 0x12
+#define KEY_RSHIFT 0x59
+#define KEY_LCTRL 0x14
+#define KEY_RCTRL 0x94
+#define KEY_ALT	0x11
+#define KEY_ALTGR 0x91
+
+
 int HandlePS2RawCodes();
 void ClearKeyboard();
 

@@ -85,7 +85,6 @@ static int LoadROM(const char *filename)
 
 	if((opened=FileOpen(&file,filename)))
 	{
-		OSD_Puts("Loading ROM\n");
 		int filesize=file.size;
 		unsigned int c=0;
 		int bits;
@@ -133,6 +132,7 @@ static int LoadROM(const char *filename)
 		HW_HOST(HW_HOST_CTRL)=HW_HOST_CTRLF_BOOTDONE;	// Release SD card and early-terminate any remaining requests for boot data
 		return(1);
 	}
+	OSD_Puts("Failed\n");
 	return(0);
 }
 
@@ -140,31 +140,49 @@ static int LoadROM(const char *filename)
 static void reset(int row)
 {
 	Menu_Hide();
-//	OSD_Clear();
-//	OSD_Show(1);
-	// FIXME - perform a core reset here without clearing the SDRAM
-//	Boot(s);
-//	Menu_Set(topmenu);
-//	OSD_Show(0);
+	HW_HOST(HW_HOST_CTRL)=HW_HOST_CTRLF_RESET;	// Put core into Reset
+	HW_HOST(HW_HOST_CTRL)=HW_HOST_CTRLF_BOOTDONE;	// release keyboard
 }
+
+
+static int romindex=0;
+static int romcount;
+
+
+static void selectrom(int row);
+static void scrollroms(int row);
+
+static char romfilenames[13][16];
+
+static struct menu_entry rommenu[]=
+{
+	{MENU_ENTRY_CALLBACK,romfilenames[0],MENU_ACTION(&selectrom)},
+	{MENU_ENTRY_CALLBACK,romfilenames[1],MENU_ACTION(&selectrom)},
+	{MENU_ENTRY_CALLBACK,romfilenames[2],MENU_ACTION(&selectrom)},
+	{MENU_ENTRY_CALLBACK,romfilenames[3],MENU_ACTION(&selectrom)},
+	{MENU_ENTRY_CALLBACK,romfilenames[4],MENU_ACTION(&selectrom)},
+	{MENU_ENTRY_CALLBACK,romfilenames[5],MENU_ACTION(&selectrom)},
+	{MENU_ENTRY_CALLBACK,romfilenames[6],MENU_ACTION(&selectrom)},
+	{MENU_ENTRY_CALLBACK,romfilenames[7],MENU_ACTION(&selectrom)},
+	{MENU_ENTRY_CALLBACK,romfilenames[8],MENU_ACTION(&selectrom)},
+	{MENU_ENTRY_CALLBACK,romfilenames[9],MENU_ACTION(&selectrom)},
+	{MENU_ENTRY_CALLBACK,romfilenames[10],MENU_ACTION(&selectrom)},
+	{MENU_ENTRY_CALLBACK,romfilenames[11],MENU_ACTION(&selectrom)},
+	{MENU_ENTRY_CALLBACK,romfilenames[12],MENU_ACTION(&selectrom)},
+	{MENU_ENTRY_SUBMENU,"Back",MENU_ACTION(topmenu)},
+	{MENU_ENTRY_NULL,0,MENU_ACTION(scrollroms)}
+};
 
 
 static void selectrom(int row)
 {
 	int i;
-	DIRENTRY *p;
-	++row;
-	for(i=0;row;++i)
+	char *fn=rommenu[row].label;
+	if(fn && fn[0])
 	{
-		if((p=NextDirEntry(i)))
-			--row;
-	}
-	if(p)
-	{
-		p->Attributes=0;
 		OSD_Puts("Loading ");
-		OSD_Puts(p->Name);
-		LoadROM(p->Name);
+		OSD_Puts(fn);
+		LoadROM(fn);
 	}
 	Menu_Set(topmenu);
 	Menu_Hide();
@@ -180,9 +198,6 @@ static void copyname(char *dst,const unsigned char *src)
 	*dst++=0;
 }
 
-
-static int romindex=0;
-static int romcount;
 
 static void listroms();
 
@@ -210,26 +225,6 @@ static void scrollroms(int row)
 	Menu_Draw();
 }
 
-static char romfilenames[13][16];
-
-static struct menu_entry rommenu[]=
-{
-	{MENU_ENTRY_CALLBACK,romfilenames[0],MENU_ACTION(&selectrom)},
-	{MENU_ENTRY_CALLBACK,romfilenames[1],MENU_ACTION(&selectrom)},
-	{MENU_ENTRY_CALLBACK,romfilenames[2],MENU_ACTION(&selectrom)},
-	{MENU_ENTRY_CALLBACK,romfilenames[3],MENU_ACTION(&selectrom)},
-	{MENU_ENTRY_CALLBACK,romfilenames[4],MENU_ACTION(&selectrom)},
-	{MENU_ENTRY_CALLBACK,romfilenames[5],MENU_ACTION(&selectrom)},
-	{MENU_ENTRY_CALLBACK,romfilenames[6],MENU_ACTION(&selectrom)},
-	{MENU_ENTRY_CALLBACK,romfilenames[7],MENU_ACTION(&selectrom)},
-	{MENU_ENTRY_CALLBACK,romfilenames[8],MENU_ACTION(&selectrom)},
-	{MENU_ENTRY_CALLBACK,romfilenames[9],MENU_ACTION(&selectrom)},
-	{MENU_ENTRY_CALLBACK,romfilenames[10],MENU_ACTION(&selectrom)},
-	{MENU_ENTRY_CALLBACK,romfilenames[11],MENU_ACTION(&selectrom)},
-	{MENU_ENTRY_CALLBACK,romfilenames[12],MENU_ACTION(&selectrom)},
-	{MENU_ENTRY_SUBMENU,"Back",MENU_ACTION(topmenu)},
-	{MENU_ENTRY_NULL,0,MENU_ACTION(scrollroms)}
-};
 
 static void listroms()
 {
@@ -305,7 +300,7 @@ int GetDIPSwitch()
 	m=&topmenu[2];
 	 	if(MENU_CYCLE_VALUE(m))
 			result|=1;	// Video mode
-	m=&topmenu[3];
+	m=&topmenu[4];
 	 	if(MENU_CYCLE_VALUE(m))
 			result|=4;	// Cartridge type
 	return(result);
@@ -366,11 +361,12 @@ int main(int argc,char **argv)
 
 		HandlePS2RawCodes();
 		visible=Menu_Run();
-		HW_HOST(HW_HOST_SW)=GetDIPSwitch();
+		HW_HOST(HW_HOST_GAMEPAD)=joya<<8|joyb;
 		if(GetDIPSwitch()!=prevds)
 		{
 			int i;
 			prevds=GetDIPSwitch();
+			HW_HOST(HW_HOST_SW)=prevds;
 			for(i=0;i<5;++i)
 			{
 				OSD_Show(visible);	// Refresh OSD position

@@ -3,6 +3,9 @@
 #include "keyboard.h"
 
 
+int joya;
+int joyb;
+
 static struct menu_entry *menu;
 static int menu_visible=0;
 int menu_toggle_bits;
@@ -92,16 +95,48 @@ int Menu_Run()
 		OSD_Show(menu_visible^=1);
 	}
 
+	joya=0;
+	joyb=0;
+
 	if(!menu_visible)	// Swallow any keystrokes that occur while the OSD is hidden...
 	{
-		TestKey(KEY_ENTER);
-		TestKey(KEY_UPARROW);
-		TestKey(KEY_DOWNARROW);
-		TestKey(KEY_LEFTARROW);
-		TestKey(KEY_RIGHTARROW);
+		if(TestKey(KEY_ENTER))
+			joya|=0x80;
+		if(TestKey(KEY_RSHIFT))
+			joya|=0x40;
+		if(TestKey(KEY_RCTRL))
+			joya|=0x10;
+		if(TestKey(KEY_ALTGR))
+			joya|=0x20;
+		if(TestKey(KEY_UPARROW))
+			joya|=0x01;
+		if(TestKey(KEY_DOWNARROW))
+			joya|=0x02;
+		if(TestKey(KEY_LEFTARROW))
+			joya|=0x04;
+		if(TestKey(KEY_RIGHTARROW))
+			joya|=0x08;
+
+		if(TestKey(KEY_CAPSLOCK))
+			joyb|=0x80;
+		if(TestKey(KEY_LSHIFT))
+			joyb|=0x40;
+		if(TestKey(KEY_LCTRL))
+			joyb|=0x10;
+		if(TestKey(KEY_ALT))
+			joyb|=0x20;
+		if(TestKey(KEY_W))
+			joyb|=0x01;
+		if(TestKey(KEY_S))
+			joyb|=0x02;
+		if(TestKey(KEY_A))
+			joyb|=0x04;
+		if(TestKey(KEY_D))
+			joyb|=0x08;
+
 		TestKey(KEY_PAGEUP);
 		TestKey(KEY_PAGEDOWN);
-	return;
+		return;
 	}
 
 	if(TestKey(KEY_UPARROW)&2)

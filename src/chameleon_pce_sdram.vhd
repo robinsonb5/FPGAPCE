@@ -12,6 +12,8 @@
 -- developed for the Turbo Chameleon 64 cartridge. Either open or closed
 -- source whatever might be required by other licenses.
 --
+-- Used with persmission in the FPGAPCE project.
+--
 -- http://www.syntiac.com/chameleon.html
 -- -----------------------------------------------------------------------
 --

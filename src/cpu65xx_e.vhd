@@ -11,6 +11,8 @@
 --
 -- Interface to 6502/6510 core
 --
+-- Used with permission in the FPGAPCE project
+--
 -- -----------------------------------------------------------------------
 
 library IEEE;

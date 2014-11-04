@@ -44,4 +44,6 @@ int Menu_Run(); // Returns the menu's visibility
 extern int menu_toggle_bits;
 #define MENU_TOGGLE_VALUES menu_toggle_bits
 
+extern int joya,joyb;
+
 #endif

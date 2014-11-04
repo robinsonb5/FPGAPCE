@@ -11,6 +11,8 @@
 --
 -- Table driven, cycle exact 6502/6510 core
 --
+-- Used with permission in the FPGAPCE project
+--
 -- -----------------------------------------------------------------------
 
 -- Modified by Gregory Estrade (Torlus) to implement a HuC6280 core.
