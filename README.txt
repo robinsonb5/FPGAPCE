@@ -13,8 +13,14 @@ MIST
 Altera DE1 (Sound currently disabled to make space for the OSD CPU - since
 otherwise we run out of block RAM.
 
+Currently only one joypad is supported.  As well as native joypad support
+the OSD firmware provides joypad emulation via the keyboard, using the
+cursor keys, right ctrl, and AltGr keys.
+The Run and Select buttons are Enter and Right Shift, respectively.
 
-Origina README follows:
+Ultimately I will try and add multitap support.
+
+Original README follows:
 
 ================================================================================
 fpgapce - a NEC PC-Engine/Turbografx-16 clone in a FPGA.
