@@ -1,8 +1,20 @@
 
-PLEASE NOTE - this is a fork of the original FPGA PC Engine core, and is
-currently broken while I overhaul its structure, remove as many board dependencies
-as possible and add an OSD / Control module.
+PLEASE NOTE - this is a fork of the original FPGA PC Engine core, which adds
+a second CPU and an on-screen display menu for setting options and selecting
+ROMs.  I may well have introduced bugs in the process, and this should be
+considered highly experimental.
 
+In particular, the strange bank remapping used in 768K ROMs is not currently
+supported - if you have such a ROM please let me know.
+
+Currently the core builds for the following platforms:
+Turbo Chameleon 64
+MIST
+Altera DE1 (Sound currently disabled to make space for the OSD CPU - since
+otherwise we run out of block RAM.
+
+
+Origina README follows:
 
 ================================================================================
 fpgapce - a NEC PC-Engine/Turbografx-16 clone in a FPGA.

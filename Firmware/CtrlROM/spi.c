@@ -361,6 +361,7 @@ int sd_read_sector(unsigned long lba,unsigned char *buf)
 		}
 	}
 	SPI(0xff);
+	SPI(0xff); 	// Discard Two CRC bytes
 	SPI_CS(0);
 	return(result);
 }
