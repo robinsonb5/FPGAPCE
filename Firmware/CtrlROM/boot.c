@@ -20,10 +20,9 @@
 fileTYPE file;
 static struct menu_entry topmenu[];
 
-
-#define BIT_SCANLINES 1
-
-#define DEFAULT_DIPSWITCH_SETTINGS 0
+int splitrom;
+int multitap;
+#define DEFAULT_DIPSWITCH_SETTINGS HW_HOST_SWF_MULTITAP
 
 void SetVolumes(int v);
 
@@ -104,6 +103,11 @@ static int LoadROM(const char *filename)
 			FileNextSector(&file);	// Skip the header		
 		}
 
+		if(filesize==(768*1024))
+			splitrom=HW_HOST_SWF_ROMSPLIT;
+		else
+			splitrom=0;
+
 		while(filesize>0)
 		{
 			OSD_ProgressBar(c,bits);
@@ -113,11 +117,11 @@ static int LoadROM(const char *filename)
 				int *p=(int *)&sector_buffer;
 				for(i=0;i<(filesize<512 ? filesize : 512) ;i+=4)
 				{
-					unsigned int t=*p++;
-					unsigned int t1=((t&0xff00)>>8)|((t&0xff)<<8);
-					unsigned int t2=((t&0xff000000)>>24)|((t&0xff0000)>>8);
-					HW_HOST(HW_HOST_BOOTDATA)=t2;
-					HW_HOST(HW_HOST_BOOTDATA)=t1;
+					unsigned int t=*p++;  // AABBCCDD
+					unsigned int t1=((t&0xff00)>>8)|((t&0xff)<<8); // DDCC
+					unsigned int t2=((t&0xff000000)>>24)|((t&0xff0000)>>8);  // BBAA
+					HW_HOST(HW_HOST_BOOTDATA)=t2; // BBAA
+					HW_HOST(HW_HOST_BOOTDATA)=t1; // DDCC
 				}
 			}
 			else
@@ -129,7 +133,9 @@ static int LoadROM(const char *filename)
 			filesize-=512;
 			++c;
 		}
-		HW_HOST(HW_HOST_CTRL)=HW_HOST_CTRLF_BOOTDONE;	// Release SD card and early-terminate any remaining requests for boot data
+//		prevds=GetDIPSwitch();
+//		HW_HOST(HW_HOST_SW)=prevds;
+//		HW_HOST(HW_HOST_CTRL)=HW_HOST_CTRLF_BOOTDONE;	// Release SD card and early-terminate any remaining requests for boot data
 		return(1);
 	}
 	OSD_Puts("Failed\n");
@@ -275,7 +281,7 @@ static struct menu_entry topmenu[]=
 	{MENU_ENTRY_CALLBACK,"Reset",MENU_ACTION(&reset)},
 	{MENU_ENTRY_CALLBACK,"Save settings",MENU_ACTION(&SaveSettings)},
 	{MENU_ENTRY_CYCLE,(char *)video_labels,2},
-	{MENU_ENTRY_TOGGLE,"Scanlines",BIT_SCANLINES},
+	{MENU_ENTRY_TOGGLE,"Scanlines",HW_HOST_SWF_SCANLINES},
 	{MENU_ENTRY_CYCLE,(char *)cart_labels,2},
 	{MENU_ENTRY_CALLBACK,"Load ROM \x10",MENU_ACTION(&showrommenu)},
 	{MENU_ENTRY_CALLBACK,"Exit",MENU_ACTION(&Menu_Hide)},
@@ -303,6 +309,10 @@ int GetDIPSwitch()
 	m=&topmenu[4];
 	 	if(MENU_CYCLE_VALUE(m))
 			result|=4;	// Cartridge type
+	result|=splitrom;
+	if(multitap)
+		result|=HW_HOST_SWF_MULTITAP;
+
 	return(result);
 }
 
@@ -310,6 +320,8 @@ int GetDIPSwitch()
 int main(int argc,char **argv)
 {
 	int i;
+	splitrom=0;
+	multitap=1;
 	SetDIPSwitch(DEFAULT_DIPSWITCH_SETTINGS);
 	HW_HOST(HW_HOST_CTRL)=HW_HOST_CTRLF_RESET;	// Put core into Reset
 	HW_HOST(HW_HOST_SW)=DEFAULT_DIPSWITCH_SETTINGS;

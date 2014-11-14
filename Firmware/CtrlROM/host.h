@@ -8,6 +8,10 @@
 
 /* DIP switches, bits 9 downto 0 */
 #define HW_HOST_SW 0x0
+#define HW_HOST_SWF_SCANLINES 2
+#define HW_HOST_SWF_BITFLIP 4
+#define HW_HOST_SWF_ROMSPLIT 8
+#define HW_HOST_SWF_MULTITAP 16
 
 /* Control the host:
  *  Bit 0: 1=> Reset, 0=> Run

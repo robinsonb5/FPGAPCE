@@ -96,8 +96,8 @@ signal CPU_VCE_SEL_N	: std_logic;
 signal CPU_VDC_SEL_N	: std_logic;
 signal CPU_RAM_SEL_N	: std_logic;
 
-signal CPU_IO_DI		: std_logic_vector(7 downto 0);
-signal CPU_IO_DO		: std_logic_vector(7 downto 0);
+signal CPU_IO_DI		: std_logic_vector(7 downto 0);  -- bit 6: country, bits 3-0: joypad data
+signal CPU_IO_DO		: std_logic_vector(7 downto 0);  -- bit 1: clr, bit 0: sel
 
 -- RAM signals
 signal RAM_A		: std_logic_vector(12 downto 0);
@@ -224,19 +224,20 @@ signal gp2emu : std_logic_vector(7 downto 0);
 signal joya_merged : std_logic_vector(7 downto 0);
 signal joyb_merged : std_logic_vector(7 downto 0);
 
+signal gamepad_port : unsigned(2 downto 0);
+signal multitap : std_logic :='1';
+signal prev_sel : std_logic;
+
 begin
 
 -- Reset
 PRE_RESET_N <= reset and SDR_INIT_DONE and host_reset_n;
 
--- FIXME - take these from the OSD
--- Header present switch
---HEADER <= SW(1);
 -- Bit flipping switch
 BITFLIP <= SW(2);
 -- ROM splitting switch
 SPLIT <= SW(3);
-
+multitap <= SW(4);
 
 -- I/O
 -- GPIO_1 <= (others => 'Z');
@@ -510,7 +511,22 @@ begin
 						else
 							romrd_req <= not romrd_req;
 							romrd_a<=(others=>'0');
-							romrd_a(19 downto 3) <= CPU_A(19 downto 3);
+							romrd_a(17 downto 3) <= CPU_A(17 downto 3);
+
+							-- Handle ROM splitting on the fly -- AMR
+							-- 00000 - 7FFFF (512kb) copied directly
+							-- 80000 - BFFFF -> 40000 - 7FFFF  -  repeated data
+							-- C0000 - FFFFF -> 80000 - BFFFF  -  Last 256 kb
+							-- Address mapping: based on bits 19 downto 18:
+							-- 00 -> 00
+							-- 01 -> 01
+							-- 10 -> 01
+							-- 11 -> 10
+							--	bit(19) <= src(19) and (src(18) or not split)
+							-- bit(18) <= src(18) xor (src(19) and split)
+							romrd_a(18) <= CPU_A(18) xor (CPU_A(19) and split);
+							romrd_a(19) <= CPU_A(19) and (CPU_A(18) or not split);
+
 							romrd_a_cached<=(others=>'0');
 							romrd_a_cached(19 downto 3) <= CPU_A(19 downto 3);
 							ROM_RDY <= '0';
@@ -622,7 +638,11 @@ begin
 						-- end if;
 
 						romwr_a <= romwr_a + 1;
---						if SPLIT = '1' and romwr_a(19 downto 0) = x"7FFFF" then
+				
+						--	bit(19) <= src(19) and (src(18) or not split)
+						-- bit(18) <= src(18) xor (src(19) and split)
+
+						--						if SPLIT = '1' and romwr_a(19 downto 0) = x"7FFFF" then
 --							boot_a <= std_logic_vector(unsigned(boot_a) - (256*1024) + 1);	
 --						end if;
 						
@@ -666,14 +686,34 @@ end process;
 joya_merged <= joya and gp1emu;
 joyb_merged <= joyb and gp2emu;
 
+
+
 -- I/O Port
 CPU_IO_DI(7 downto 4) <= "1011"; -- No CD-Rom unit, TGFX-16
-CPU_IO_DI(3 downto 0) <= joya_merged(7 downto 4) when CPU_IO_DO(1 downto 0) = "00" and SW(5) = '0'
-	else joya_merged(2) & joya_merged(1) & joya_merged(3) & joya_merged(0) when CPU_IO_DO(1 downto 0) = "01" and SW(5) = '0'
-	else joyb_merged(7 downto 4) when CPU_IO_DO(1 downto 0) = "00" and SW(5) = '1'
-	else joyb_merged(2) & joyb_merged(1) & joyb_merged(3) & joyb_merged(0) when CPU_IO_DO(1 downto 0) = "01" and SW(5) = '1'
-	else "0000";
+CPU_IO_DI(3 downto 0) <=
+	joya_merged(7) & joya_merged(6) & joya_merged(4) & joya_merged(5)
+		when CPU_IO_DO(1 downto 0) = "00" and gamepad_port = "000"
+	else joya_merged(2) & joya_merged(1) & joya_merged(3) & joya_merged(0)
+		when CPU_IO_DO(1 downto 0) = "01" and gamepad_port = "000"
+	else joyb_merged(7) & joyb_merged(6) & joyb_merged(4) & joyb_merged(5)
+		when CPU_IO_DO(1 downto 0) = "00" and gamepad_port = "001"
+	else joyb_merged(2) & joyb_merged(1) & joyb_merged(3) & joyb_merged(0)
+		when CPU_IO_DO(1 downto 0) = "01" and gamepad_port = "001"
+	else "1111";
 
+process(clk)
+begin
+	if rising_edge(clk) then
+		if CPU_IO_DO(1)='1' then -- reset pad
+			gamepad_port<=(others => '0');
+		elsif prev_sel='0' and CPU_IO_DO(0)='1' and multitap='1' then -- Rising edge of select bit
+			gamepad_port<=gamepad_port+1;
+		end if;
+		prev_sel<=CPU_IO_DO(0);
+	end if;
+
+end process;
+	
 -- Control module:
 
 mycontrolmodule : entity work.CtrlModule
