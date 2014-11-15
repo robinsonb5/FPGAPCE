@@ -19,6 +19,7 @@
 
 fileTYPE file;
 static struct menu_entry topmenu[];
+int dipswitch;
 
 int multitap;
 #define DEFAULT_DIPSWITCH_SETTINGS HW_HOST_SWF_MULTITAP
@@ -48,25 +49,23 @@ void WaitEnter()
 
 void LoadSettings()
 {
-	int dipsw;
 	if(FileOpen(&file,"FPGAPCE CFG"))	// Do we have a configuration file?
 	{
 		FileRead(&file,sector_buffer);
-		dipsw=*(int *)(&sector_buffer[0]);
-		HW_HOST(HW_HOST_SW)=dipsw;
-		SetDIPSwitch(dipsw);
+		dipswitch=*(int *)(&sector_buffer[0]);
+		HW_HOST(HW_HOST_SW)=dipswitch;
+		SetDIPSwitch(dipswitch);
 	}
 }
 
 
 void SaveSettings(int row)
 {
-	int dipsw=GetDIPSwitch();
 	if(FileOpen(&file,"FPGAPCE CFG"))	// Do we have a configuration file?
 	{
 		int i;
 		int *p=(int *)sector_buffer;
-		*p++=dipsw;
+		*p++=dipswitch;
 		for(i=0;i<126;++i)	// Clear remainder of buffer
 			*p++=0;
 		FileWrite(&file,sector_buffer);
@@ -103,8 +102,11 @@ static int LoadROM(const char *filename)
 			FileNextSector(&file);	// Skip the header		
 		}
 
+		dipswitch&=~HW_HOST_SWF_ROMSPLIT;
 		if(filesize==(768*1024))
-			HW_HOST(HW_HOST_SW)=GetDIPSwitch()|HW_HOST_SWF_ROMSPLIT;
+			dipswitch|=HW_HOST_SWF_ROMSPLIT;
+
+		HW_HOST(HW_HOST_SW)=dipswitch;
 
 		while(filesize>0)
 		{
@@ -131,9 +133,6 @@ static int LoadROM(const char *filename)
 			filesize-=512;
 			++c;
 		}
-//		prevds=GetDIPSwitch();
-//		HW_HOST(HW_HOST_SW)=prevds;
-//		HW_HOST(HW_HOST_CTRL)=HW_HOST_CTRLF_BOOTDONE;	// Release SD card and early-terminate any remaining requests for boot data
 		return(1);
 	}
 	OSD_Puts("Failed\n");
@@ -147,6 +146,7 @@ static void reset(int row)
 	HW_HOST(HW_HOST_CTRL)=HW_HOST_CTRLF_RESET;	// Put core into Reset
 	HW_HOST(HW_HOST_CTRL)=HW_HOST_CTRLF_BOOTDONE;	// release keyboard
 }
+
 
 
 static int romindex=0;
@@ -184,8 +184,8 @@ static void selectrom(int row)
 	char *fn=rommenu[row].label;
 	if(fn && fn[0])
 	{
-		OSD_Puts("Loading ");
-		OSD_Puts(fn);
+//		OSD_Puts("Loading ");
+//		OSD_Puts(fn);
 		LoadROM(fn);
 	}
 	Menu_Set(topmenu);
@@ -251,11 +251,36 @@ static void listroms()
 	}
 }
 
+
+void load_pcengine(int row)
+{
+	dipswitch&=~HW_HOST_SWF_BITFLIP;
+	selectrom(row);
+}
+
+
+void load_tg16(int row)
+{
+	dipswitch|=HW_HOST_SWF_BITFLIP;
+	selectrom(row);
+}
+
+
+static struct hotkey hotkeys[]=
+{
+	{KEY_P,load_pcengine},
+	{KEY_T,load_tg16},
+	{0,0}
+};
+
+
+
 static void showrommenu(int row)
 {
 	romindex=0;
 	listroms();
 	Menu_Set(rommenu);
+	Menu_SetHotKeys(hotkeys);
 }
 
 
@@ -365,16 +390,15 @@ int main(int argc,char **argv)
 	while(1)
 	{
 		int visible;
-		static int prevds;
 
 		HandlePS2RawCodes();
 		visible=Menu_Run();
 		HW_HOST(HW_HOST_GAMEPAD)=joya<<8|joyb;
-		if(GetDIPSwitch()!=prevds)
+		if(GetDIPSwitch()!=dipswitch)
 		{
 			int i;
-			prevds=GetDIPSwitch();
-			HW_HOST(HW_HOST_SW)=prevds;
+			dipswitch=GetDIPSwitch();
+			HW_HOST(HW_HOST_SW)=dipswitch;
 			for(i=0;i<5;++i)
 			{
 				OSD_Show(visible);	// Refresh OSD position

@@ -11,7 +11,7 @@ static int menu_visible=0;
 int menu_toggle_bits;
 static int menurows;
 static int currentrow;
-
+static struct hotkey *hotkeys;
 
 void Menu_Show()
 {
@@ -81,10 +81,16 @@ void Menu_Set(struct menu_entry *head)
 }
 
 
+void Menu_SetHotKeys(struct hotkey *head)
+{
+	hotkeys=head;
+}
+
 int Menu_Run()
 {
 	int i;
 	struct menu_entry *m=menu;
+	struct hotkey *hk=hotkeys;
 
 	if((TestKey(KEY_F11)&2)||(TestKey(KEY_F12)&2))
 	{
@@ -136,6 +142,7 @@ int Menu_Run()
 
 		TestKey(KEY_PAGEUP);
 		TestKey(KEY_PAGEDOWN);
+
 		return;
 	}
 
@@ -232,6 +239,13 @@ int Menu_Run()
 				break;
 
 		}
+	}
+
+	while(hk && hk->key)
+	{
+		if(TestKey(hk->key)&1)	// Currently pressed?
+			hk->callback(currentrow);
+		++hk;
 	}
 
 	for(i=0;i<OSD_ROWS-1;++i)
