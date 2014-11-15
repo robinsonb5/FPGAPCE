@@ -20,11 +20,11 @@
 fileTYPE file;
 static struct menu_entry topmenu[];
 
-int splitrom;
 int multitap;
 #define DEFAULT_DIPSWITCH_SETTINGS HW_HOST_SWF_MULTITAP
 
 void SetVolumes(int v);
+int GetDIPSwitch();
 
 
 void OSD_Puts(char *str)
@@ -104,9 +104,7 @@ static int LoadROM(const char *filename)
 		}
 
 		if(filesize==(768*1024))
-			splitrom=HW_HOST_SWF_ROMSPLIT;
-		else
-			splitrom=0;
+			HW_HOST(HW_HOST_SW)=GetDIPSwitch()|HW_HOST_SWF_ROMSPLIT;
 
 		while(filesize>0)
 		{
@@ -309,7 +307,6 @@ int GetDIPSwitch()
 	m=&topmenu[4];
 	 	if(MENU_CYCLE_VALUE(m))
 			result|=4;	// Cartridge type
-	result|=splitrom;
 	if(multitap)
 		result|=HW_HOST_SWF_MULTITAP;
 
@@ -320,7 +317,6 @@ int GetDIPSwitch()
 int main(int argc,char **argv)
 {
 	int i;
-	splitrom=0;
 	multitap=1;
 	SetDIPSwitch(DEFAULT_DIPSWITCH_SETTINGS);
 	HW_HOST(HW_HOST_CTRL)=HW_HOST_CTRLF_RESET;	// Put core into Reset

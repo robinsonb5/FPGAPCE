@@ -150,6 +150,8 @@ architecture rtl of chameleon_toplevel is
 	signal gp1_select : std_logic;
 	signal joy1 : unsigned(7 downto 0);
 	signal joy2 : unsigned(7 downto 0);
+	signal joy3 : unsigned(7 downto 0);
+	signal joy4 : unsigned(7 downto 0);
 	signal usart_rx : std_logic:='1';
 	signal ir : std_logic;
 
@@ -332,6 +334,8 @@ cdtv_remote : entity work.chameleon_cdtv_remote
 
 joy1<=not gp1_run & not gp1_select & (c64_joy1 and cdtv_joy1);
 joy2<="11" & (c64_joy2 and cdtv_joy2);
+joy3<="11" & joystick3;
+joy4<="11" & joystick4;
 	
 
   U00 : entity work.pll
@@ -375,8 +379,8 @@ virtualtoplevel : entity work.Virtual_Toplevel
 --    -- Joystick ports (Port_A, Port_B)
 	joya => std_logic_vector(joy1),
 	joyb => std_logic_vector(joy2),
-	gp1_run => gp1_run,
-	gp1_select => gp1_select,
+	joyc => std_logic_vector(joy3),
+	joyd => std_logic_vector(joy4),
 
     -- SD/MMC slot ports
 	spi_clk => spi_clk,

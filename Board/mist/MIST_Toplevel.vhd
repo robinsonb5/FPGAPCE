@@ -62,8 +62,8 @@ signal vga_window : std_logic;
 -- user_io
 signal buttons: std_logic_vector(1 downto 0);
 signal status:  std_logic_vector(7 downto 0);
-signal joy_0: std_logic_vector(5 downto 0);
-signal joy_1: std_logic_vector(5 downto 0);
+signal joy_0: std_logic_vector(7 downto 0);
+signal joy_1: std_logic_vector(7 downto 0);
 signal joyn_0: std_logic_vector(7 downto 0);
 signal joyn_1: std_logic_vector(7 downto 0);
 signal joy_ana_0: std_logic_vector(15 downto 0);
@@ -164,8 +164,8 @@ component user_io
 			  SPI_CLK, SPI_SS_IO, SPI_MOSI :in std_logic;
            SPI_MISO : out std_logic;
            conf_str : in std_logic_vector(8*STRLEN-1 downto 0);
-           joystick_0 : out std_logic_vector(5 downto 0);
-           joystick_1 : out std_logic_vector(5 downto 0);
+           joystick_0 : out std_logic_vector(7 downto 0);
+           joystick_1 : out std_logic_vector(7 downto 0);
            joystick_analog_0 : out std_logic_vector(15 downto 0);
            joystick_analog_1 : out std_logic_vector(15 downto 0);
            status: out std_logic_vector(7 downto 0);
@@ -284,6 +284,8 @@ virtualtoplevel : entity work.Virtual_Toplevel
 --    -- Joystick ports (Port_A, Port_B)
 	joya => joyn_0,
 	joyb => joyn_1,
+	joyc => (others => '1'),
+	joyd => (others => '1'),
 
     -- SD/MMC slot ports
 	spi_clk => sd_sck,
@@ -386,8 +388,8 @@ user_io_d : user_io
  );
  
 -- swap, invert and remap joystick bits
- joyn_0 <= "11" & not joy_1(5) & not joy_1(4) & not joy_1(0) & not joy_1(1) & not joy_1(2) & not joy_1(3);
- joyn_1 <= "11" & not joy_0(5) & not joy_0(4) & not joy_0(0) & not joy_0(1) & not joy_0(2) & not joy_0(3);
+ joyn_0 <= not joy_1(7) & not joy_1(6) & not joy_1(5) & not joy_1(4) & not joy_1(0) & not joy_1(1) & not joy_1(2) & not joy_1(3);
+ joyn_1 <= not joy_0(7) & not joy_0(6) & not joy_0(5) & not joy_0(4) & not joy_0(0) & not joy_0(1) & not joy_0(2) & not joy_0(3);
  
 vga_window<='1';
 mydither : component video_vga_dither

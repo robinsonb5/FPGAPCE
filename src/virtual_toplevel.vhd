@@ -50,8 +50,8 @@ entity Virtual_Toplevel is
 		
 		joya : in std_logic_vector(7 downto 0);
 		joyb : in std_logic_vector(7 downto 0);
-		gp1_run : in std_logic := '1';
-		gp1_select : in std_logic := '1';
+		joyc : in std_logic_vector(7 downto 0);
+		joyd : in std_logic_vector(7 downto 0);
 
 		spi_miso		: in std_logic := '1';
 		spi_mosi		: out std_logic;
@@ -178,7 +178,7 @@ signal VDCDMAS_RAM_ACK	: std_logic;
 
 signal SDR_INIT_DONE	: std_logic;
 
-type bootStates is (BOOT_READ_1, BOOT_READ_2, BOOT_WRITE_1, BOOT_WRITE_2, BOOT_REL, BOOT_DONE);
+type bootStates is (BOOT_READ_1, BOOT_READ_2, BOOT_WRITE_1, BOOT_WRITE_2, BOOT_WRITE_3, BOOT_WRITE_4, BOOT_REL, BOOT_DONE);
 signal bootState : bootStates := BOOT_READ_1;
 signal bootTimer : integer range 0 to 32767;
 
@@ -511,21 +511,7 @@ begin
 						else
 							romrd_req <= not romrd_req;
 							romrd_a<=(others=>'0');
-							romrd_a(17 downto 3) <= CPU_A(17 downto 3);
-
-							-- Handle ROM splitting on the fly -- AMR
-							-- 00000 - 7FFFF (512kb) copied directly
-							-- 80000 - BFFFF -> 40000 - 7FFFF  -  repeated data
-							-- C0000 - FFFFF -> 80000 - BFFFF  -  Last 256 kb
-							-- Address mapping: based on bits 19 downto 18:
-							-- 00 -> 00
-							-- 01 -> 01
-							-- 10 -> 01
-							-- 11 -> 10
-							--	bit(19) <= src(19) and (src(18) or not split)
-							-- bit(18) <= src(18) xor (src(19) and split)
-							romrd_a(18) <= CPU_A(18) xor (CPU_A(19) and split);
-							romrd_a(19) <= CPU_A(19) and (CPU_A(18) or not split);
+							romrd_a(19 downto 3) <= CPU_A(19 downto 3);
 
 							romrd_a_cached<=(others=>'0');
 							romrd_a_cached(19 downto 3) <= CPU_A(19 downto 3);
@@ -629,34 +615,34 @@ begin
 					bootState <= BOOT_WRITE_2;
 				when BOOT_WRITE_2 =>
 					if romwr_req = romwr_ack then
---						boot_a <= std_logic_vector(unsigned(boot_a) + 1);
+					
+						-- Need to handle ROM splitting -- AMR
+						-- 00000 - 3FFFF (first 256kb) copied directly
+						-- 40000 - 7FFFF must be shadowed to 80000 - BFFFF
+						-- C0000 - FFFFF copied directly
 						
-						-- if SPLIT = '1' and romwr_a(19 downto 0) = x"7FFFF" then
-							-- romwr_a <= romwr_a + (256*1024) + 1;
-						-- else
-							-- romwr_a <= romwr_a + 1;
-						-- end if;
-
-						romwr_a <= romwr_a + 1;
+						if SPLIT='1' and romwr_a(19 downto 18)="01" then -- Need to write a second time.
+							romwr_a(19 downto 18)<="10";
+							romwr_req <= not romwr_req;
+							bootState <= BOOT_WRITE_3;
+						else
+							romwr_a <= romwr_a + 1;
+							bootState <= BOOT_READ_1;
+						end if;
 				
-						--	bit(19) <= src(19) and (src(18) or not split)
-						-- bit(18) <= src(18) xor (src(19) and split)
-
-						--						if SPLIT = '1' and romwr_a(19 downto 0) = x"7FFFF" then
---							boot_a <= std_logic_vector(unsigned(boot_a) - (256*1024) + 1);	
---						end if;
-						
---						if host_bootdone='1' then
---						if romwr_a(19 downto 0) = x"FFFFF"
---	-- synthesis translate_off
---						or romwr_a(19 downto 0) = x"07FFF" 
---	-- synthesis translate_on
---						then
---							bootState <= BOOT_REL;
---						else
-						bootState <= BOOT_READ_1;
---						end if;
 					end if;
+				when BOOT_WRITE_3 =>
+					if romwr_req = romwr_ack then
+						romwr_a <= romwr_a + 1;
+						bootState <= BOOT_WRITE_4;
+					end if;
+				when BOOT_WRITE_4 =>
+					-- Restore address bits after second write.
+					-- If the address has bumped past the next 256kb boundary we
+					-- set it to 0xc0000
+					romwr_a(19)<=romwr_a(18); -- Will be zero unless we've passed the 256kb boundary
+					romwr_a(18)<=not romwr_a(18); -- As above but inverted.
+					bootState <= BOOT_READ_1;
 				when BOOT_REL =>
 					if CPU_CLKRST = '1' then
 --						ROM_RESET_N <= '1';
@@ -695,10 +681,21 @@ CPU_IO_DI(3 downto 0) <=
 		when CPU_IO_DO(1 downto 0) = "00" and gamepad_port = "000"
 	else joya_merged(2) & joya_merged(1) & joya_merged(3) & joya_merged(0)
 		when CPU_IO_DO(1 downto 0) = "01" and gamepad_port = "000"
+		
 	else joyb_merged(7) & joyb_merged(6) & joyb_merged(4) & joyb_merged(5)
 		when CPU_IO_DO(1 downto 0) = "00" and gamepad_port = "001"
 	else joyb_merged(2) & joyb_merged(1) & joyb_merged(3) & joyb_merged(0)
 		when CPU_IO_DO(1 downto 0) = "01" and gamepad_port = "001"
+		
+	else joyc(7) & joyc(6) & joyc(4) & joyc(5)
+		when CPU_IO_DO(1 downto 0) = "00" and gamepad_port = "010"
+	else joyc(2) & joyc(1) & joyc(3) & joyc(0)
+		when CPU_IO_DO(1 downto 0) = "01" and gamepad_port = "010"
+		
+	else joyd(7) & joyd(6) & joyd(4) & joyd(5)
+		when CPU_IO_DO(1 downto 0) = "00" and gamepad_port = "011"
+	else joyd(2) & joyd(1) & joyd(3) & joyd(0)
+		when CPU_IO_DO(1 downto 0) = "01" and gamepad_port = "011"
 	else "1111";
 
 process(clk)
