@@ -8,9 +8,13 @@
 
 /* DIP switches, bits 9 downto 0 */
 #define HW_HOST_SW 0x0
+
+#define HW_HOST_SWB_SCANLINES 1
 #define HW_HOST_SWF_SCANLINES 2
+
 #define HW_HOST_SWF_BITFLIP 4
-#define HW_HOST_SWF_ROMSPLIT 8
+
+#define HW_HOST_SWB_MULTITAP 4
 #define HW_HOST_SWF_MULTITAP 16
 
 /* Control the host:
@@ -34,6 +38,11 @@
 #define HW_HOST_MOUSEF_IDLE 0x1  /* Has the previously written event been received? */
 #define HW_HOST_VOLUMES 0x14 /* Each volume control is 3 bits: 2:0, 6:4, 10:8, 14:12 */
 #define HW_HOST_GAMEPAD 0x18
+
+#define HW_HOST_ROMMAPPING 0x1c
+#define HW_HOST_ROMMAPPING_NONE 0
+#define HW_HOST_ROMMAPPING_384 1
+#define HW_HOST_ROMMAPPING_768 2
 
 #endif
 

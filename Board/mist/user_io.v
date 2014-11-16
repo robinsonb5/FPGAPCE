@@ -32,6 +32,9 @@ module user_io #(parameter STRLEN=0) (
 	
 	output reg [7:0] 	joystick_0,
 	output reg [7:0] 	joystick_1,
+	output reg [7:0] 	joystick_2,
+	output reg [7:0] 	joystick_3,
+	output reg [7:0] 	joystick_4,
 	output reg [15:0] joystick_analog_0,
 	output reg [15:0] joystick_analog_1,
 	output [1:0] 		buttons,
@@ -68,8 +71,6 @@ reg [6:0]         sbuf;
 reg [7:0]         cmd;
 reg [2:0] 	      bit_cnt;    // counts bits 0-7 0-7 ...
 reg [7:0]         byte_cnt;   // counts bytes
-reg [5:0]         joystick0;
-reg [5:0]         joystick1;
 reg [3:0] 	      but_sw;
 reg [2:0]         stick_idx;
 
@@ -345,7 +346,16 @@ always@(posedge spi_sck or posedge SPI_SS_IO) begin
 				 
 				if(cmd == 8'h03)
 					joystick_1 <= { sbuf[6:0], SPI_MOSI };
+
+				if(cmd == 8'h10)
+					joystick_2 <= { sbuf[6:0], SPI_MOSI };
 				 
+				if(cmd == 8'h11)
+					joystick_3 <= { sbuf[6:0], SPI_MOSI };
+					
+				if(cmd == 8'h12)
+					joystick_4 <= { sbuf[6:0], SPI_MOSI };
+					
 				if(cmd == 8'h04) begin
 					// store incoming ps2 mouse bytes 
 					ps2_mouse_fifo[ps2_mouse_wptr] <= { sbuf, SPI_MOSI }; 

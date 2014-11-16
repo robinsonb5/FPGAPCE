@@ -75,7 +75,6 @@ void SaveSettings(int row)
 
 static int LoadROM(const char *filename)
 {
-	int result=0;
 	int opened;
 
 	HW_HOST(HW_HOST_CTRL)=HW_HOST_CTRLF_RESET;	// Put core into Reset
@@ -83,6 +82,7 @@ static int LoadROM(const char *filename)
 
 	if((opened=FileOpen(&file,filename)))
 	{
+		int result;
 		int filesize=file.size;
 		unsigned int c=0;
 		int bits;
@@ -102,11 +102,14 @@ static int LoadROM(const char *filename)
 			FileNextSector(&file);	// Skip the header		
 		}
 
-		dipswitch&=~HW_HOST_SWF_ROMSPLIT;
 		if(filesize==(768*1024))
-			dipswitch|=HW_HOST_SWF_ROMSPLIT;
+			HW_HOST(HW_HOST_ROMMAPPING)=HW_HOST_ROMMAPPING_768;
+		else if(filesize==(384*1024))
+			HW_HOST(HW_HOST_ROMMAPPING)=HW_HOST_ROMMAPPING_384;
+		else
+			HW_HOST(HW_HOST_ROMMAPPING)=HW_HOST_ROMMAPPING_NONE;
 
-		HW_HOST(HW_HOST_SW)=dipswitch;
+		result=1;
 
 		while(filesize>0)
 		{
@@ -115,7 +118,8 @@ static int LoadROM(const char *filename)
 			{
 				int i;
 				int *p=(int *)&sector_buffer;
-				for(i=0;i<(filesize<512 ? filesize : 512) ;i+=4)
+				for(i=0;i<512;i+=4)
+//				for(i=0;i<(filesize<512 ? filesize : 512) ;i+=4)
 				{
 					unsigned int t=*p++;  // AABBCCDD
 					unsigned int t1=((t&0xff00)>>8)|((t&0xff)<<8); // DDCC
@@ -126,16 +130,17 @@ static int LoadROM(const char *filename)
 			}
 			else
 			{
-				OSD_Puts("Read failed\n");
-				return(0);
+				result=0;
+				filesize=512;
+//				OSD_Puts("Read failed\n");
+//				return(0);
 			}
 			FileNextSector(&file);
 			filesize-=512;
 			++c;
 		}
-		return(1);
+		return(result);
 	}
-	OSD_Puts("Failed\n");
 	return(0);
 }
 
@@ -304,7 +309,7 @@ static struct menu_entry topmenu[]=
 	{MENU_ENTRY_CALLBACK,"Reset",MENU_ACTION(&reset)},
 	{MENU_ENTRY_CALLBACK,"Save settings",MENU_ACTION(&SaveSettings)},
 	{MENU_ENTRY_CYCLE,(char *)video_labels,2},
-	{MENU_ENTRY_TOGGLE,"Scanlines",HW_HOST_SWF_SCANLINES},
+	{MENU_ENTRY_TOGGLE,"Scanlines",HW_HOST_SWB_SCANLINES},
 	{MENU_ENTRY_CYCLE,(char *)cart_labels,2},
 	{MENU_ENTRY_CALLBACK,"Load ROM \x10",MENU_ACTION(&showrommenu)},
 	{MENU_ENTRY_CALLBACK,"Exit",MENU_ACTION(&Menu_Hide)},
@@ -317,7 +322,7 @@ int SetDIPSwitch(int d)
 	struct menu_entry *m;
 	MENU_TOGGLE_VALUES=d&2; // Scanlines
 	m=&topmenu[2]; MENU_CYCLE_VALUE(m)=d&1; // Video mode
-	m=&topmenu[3]; MENU_CYCLE_VALUE(m)=(d&4 ? 1 : 0); // Cartridge type
+	m=&topmenu[4]; MENU_CYCLE_VALUE(m)=(d&4 ? 1 : 0); // Cartridge type
 }
 
 

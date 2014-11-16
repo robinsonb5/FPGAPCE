@@ -48,10 +48,11 @@ entity Virtual_Toplevel is
 		ps2k_clk_in : in std_logic;
 		ps2k_dat_in : in std_logic;
 		
-		joya : in std_logic_vector(7 downto 0);
-		joyb : in std_logic_vector(7 downto 0);
-		joyc : in std_logic_vector(7 downto 0);
-		joyd : in std_logic_vector(7 downto 0);
+		joya : in std_logic_vector(7 downto 0) := (others =>'1');
+		joyb : in std_logic_vector(7 downto 0) := (others =>'1');
+		joyc : in std_logic_vector(7 downto 0) := (others =>'1');
+		joyd : in std_logic_vector(7 downto 0) := (others =>'1');
+		joye : in std_logic_vector(7 downto 0) := (others =>'1');
 
 		spi_miso		: in std_logic := '1';
 		spi_mosi		: out std_logic;
@@ -199,6 +200,7 @@ signal romrd_q_cached : std_logic_vector(63 downto 0);
 
 signal host_reset_n : std_logic;
 signal host_bootdone : std_logic;
+signal rommap : std_logic_vector(1 downto 0);
 
 signal boot_req : std_logic;
 signal boot_ack : std_logic;
@@ -236,7 +238,7 @@ PRE_RESET_N <= reset and SDR_INIT_DONE and host_reset_n;
 -- Bit flipping switch
 BITFLIP <= SW(2);
 -- ROM splitting switch
-SPLIT <= SW(3);
+SPLIT <= rommap(1);
 multitap <= SW(4);
 
 -- I/O
@@ -696,6 +698,12 @@ CPU_IO_DI(3 downto 0) <=
 		when CPU_IO_DO(1 downto 0) = "00" and gamepad_port = "011"
 	else joyd(2) & joyd(1) & joyd(3) & joyd(0)
 		when CPU_IO_DO(1 downto 0) = "01" and gamepad_port = "011"
+
+	else joye(7) & joye(6) & joye(4) & joye(5)
+		when CPU_IO_DO(1 downto 0) = "00" and gamepad_port = "100"
+	else joye(2) & joye(1) & joye(3) & joye(0)
+		when CPU_IO_DO(1 downto 0) = "01" and gamepad_port = "100"
+		
 	else "1111";
 
 process(clk)
@@ -748,6 +756,7 @@ mycontrolmodule : entity work.CtrlModule
 		host_bootdata => boot_data,
 		host_bootdata_req => boot_req,
 		host_bootdata_ack => boot_ack,
+		rommap => rommap,
 		
 		-- Video signals for OSD
 		vga_hsync => vga_hsync_i,

@@ -44,6 +44,7 @@ entity CtrlModule is
 		host_bootdone : out std_logic;
 		host_divert_sdcard : out std_logic;
 		host_divert_keyboard : out std_logic;
+		rommap : out std_logic_vector(1 downto 0);
 		
 		-- Host boot data
 		host_bootdata : out std_logic_vector(15 downto 0);
@@ -490,6 +491,10 @@ begin
 						when X"58" => -- Gamepads
 							gp1emu <= not mem_write(15 downto 8);
 							gp2emu <= not mem_write(7 downto 0);
+							mem_busy<='0';
+							
+						when X"5C" => -- ROM Mapping
+							rommap <= mem_write(1 downto 0);
 							mem_busy<='0';
 
 						when others =>
