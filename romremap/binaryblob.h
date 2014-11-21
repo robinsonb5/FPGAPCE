@@ -71,7 +71,7 @@ class BinaryBlob
 		if(!(f = FOpenUTF8(filename, "wb")))
 			throw "Can't open file";
 		
-		Debug[TRACE] << "Saving binary blog of size " << size << std::endl;
+		Debug[TRACE] << "Saving binary blob of size " << size << std::endl;
 
 		size_t wlen = fwrite(pointer, 1, size, f);
 		fclose(f);
