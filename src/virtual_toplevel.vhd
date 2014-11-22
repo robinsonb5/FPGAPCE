@@ -514,6 +514,26 @@ begin
 							romrd_req <= not romrd_req;
 							romrd_a<=(others=>'0');
 							romrd_a(19 downto 3) <= CPU_A(19 downto 3);
+							-- Perform address mangling to mimic HuCard chip mapping.
+							-- rommap => 00  -  Straight mapping
+							-- rommap => 01  -  384K ROM, split in 3, mapped ABABCCCC
+							-- rommap => 10  -  768K ROM, straight mapping for now
+							-- rommap => 11  -  not yet defined.
+							
+							if rommap="01" then                       -- bits 19 downto 16
+								-- 00000 -> 20000  => 00000 -> 20000		0000 -> 0000
+								-- 20000 -> 40000  => 20000 -> 40000		0010 -> 0010
+								-- 40000 -> 60000  => 00000 -> 20000		0100 -> 0000
+								-- 60000 -> 80000  => 20000 -> 40000		0110 -> 0010
+								-- 80000 -> A0000  => 40000 -> 60000		1000 -> 0100
+								-- A0000 -> C0000  => 40000 -> 60000		1010 -> 0100
+								-- C0000 -> E0000  => 40000 -> 60000		1100 -> 0100
+								-- E0000 ->100000  => 40000 -> 60000		1110 -> 0100
+								romrd_a(19)<='0';
+								romrd_a(18)<=CPU_A(19);
+								romrd_a(17)<=CPU_A(17) and not CPU_A(19);
+							end if;
+								
 
 							romrd_a_cached<=(others=>'0');
 							romrd_a_cached(19 downto 3) <= CPU_A(19 downto 3);
@@ -564,14 +584,7 @@ process( SDR_CLK )
 begin
 	if rising_edge( SDR_CLK ) then
 		if PRE_RESET_N = '0' then
---			ROM_RESET_N <= '0';
 				
---			if HEADER = '1' then
---				boot_a <= std_logic_vector(to_unsigned(512, boot_a'length));
---			else
---				boot_a <= std_logic_vector(to_unsigned(0, boot_a'length));
---			end if;
-
 			boot_req <='0';
 			
 			romwr_req <= '0';
@@ -617,37 +630,11 @@ begin
 					bootState <= BOOT_WRITE_2;
 				when BOOT_WRITE_2 =>
 					if romwr_req = romwr_ack then
-					
-						-- Need to handle ROM splitting -- AMR
-						-- 00000 - 3FFFF (first 256kb) copied directly
-						-- 40000 - 7FFFF must be shadowed to 80000 - BFFFF
-						-- C0000 - FFFFF copied directly
-						
-						if SPLIT='1' and romwr_a(19 downto 18)="01" then -- Need to write a second time.
-							romwr_a(19 downto 18)<="10";
-							romwr_req <= not romwr_req;
-							bootState <= BOOT_WRITE_3;
-						else
-							romwr_a <= romwr_a + 1;
-							bootState <= BOOT_READ_1;
-						end if;
-				
-					end if;
-				when BOOT_WRITE_3 =>
-					if romwr_req = romwr_ack then
 						romwr_a <= romwr_a + 1;
-						bootState <= BOOT_WRITE_4;
+						bootState <= BOOT_READ_1;
 					end if;
-				when BOOT_WRITE_4 =>
-					-- Restore address bits after second write.
-					-- If the address has bumped past the next 256kb boundary we
-					-- set it to 0xc0000
-					romwr_a(19)<=romwr_a(18); -- Will be zero unless we've passed the 256kb boundary
-					romwr_a(18)<=not romwr_a(18); -- As above but inverted.
-					bootState <= BOOT_READ_1;
 				when BOOT_REL =>
 					if CPU_CLKRST = '1' then
---						ROM_RESET_N <= '1';
 						bootState <= BOOT_DONE;
 					end if;
 				when others => null;
