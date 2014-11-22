@@ -77,6 +77,7 @@ static int LoadROM(const char *filename)
 {
 	int opened;
 
+	HW_HOST(HW_HOST_SW)=dipswitch;
 	HW_HOST(HW_HOST_CTRL)=HW_HOST_CTRLF_RESET;	// Put core into Reset
 	HW_HOST(HW_HOST_CTRL)=HW_HOST_CTRLF_SDCARD;	// Release reset but steal SD card
 
@@ -119,7 +120,6 @@ static int LoadROM(const char *filename)
 				int i;
 				int *p=(int *)&sector_buffer;
 				for(i=0;i<512;i+=4)
-//				for(i=0;i<(filesize<512 ? filesize : 512) ;i+=4)
 				{
 					unsigned int t=*p++;  // AABBCCDD
 					unsigned int t1=((t&0xff00)>>8)|((t&0xff)<<8); // DDCC
@@ -132,8 +132,6 @@ static int LoadROM(const char *filename)
 			{
 				result=0;
 				filesize=512;
-//				OSD_Puts("Read failed\n");
-//				return(0);
 			}
 			FileNextSector(&file);
 			filesize-=512;
