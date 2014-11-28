@@ -156,10 +156,11 @@ static int romindex=0;
 static int romcount;
 
 
+static void listroms();
 static void selectrom(int row);
 static void scrollroms(int row);
 
-static char romfilenames[13][16];
+static char romfilenames[13][30];
 
 static struct menu_entry rommenu[]=
 {
@@ -197,6 +198,27 @@ static void selectrom(int row)
 }
 
 
+static void selectdir(int row)
+{
+	int i,j=0;
+	int cluster;
+	DIRENTRY *p;
+	for(i=0;(j<=(romindex+row)) && (i<dir_entries);++i)
+	{
+		p=NextDirEntry(i);
+		if(p)
+			++j;
+	}
+
+	cluster = SwapBB(p->StartCluster);
+	cluster |= IsFat32() ? (SwapBB(p->HighCluster) & 0x0FFF) << 16 : 0;
+	ChangeDirectory(cluster);
+	romindex=0;
+	listroms();
+	Menu_Draw();
+}
+
+
 static void copyname(char *dst,const unsigned char *src)
 {
 	int i;
@@ -206,7 +228,17 @@ static void copyname(char *dst,const unsigned char *src)
 }
 
 
-static void listroms();
+static void copylfn(char *dst,const unsigned char *src, int c)
+{
+	int i;
+	for(i=0;i<c;++i)
+	{
+		*dst++=*src++;
+		++src;
+	}
+	*dst++=0;
+}
+
 
 static void scrollroms(int row)
 {
@@ -248,7 +280,21 @@ static void listroms()
 	{
 		DIRENTRY *p=NextDirEntry(i);
 		if(p)
-			copyname(romfilenames[j++],p->Name);
+		{
+			// FIXME declare a global long file name buffer.
+			if(p->Attributes&ATTR_DIRECTORY)
+			{
+				rommenu[j].action=MENU_ACTION(&selectdir);
+				romfilenames[j][0]=16; // Right arrow
+				romfilenames[j][1]=' ';
+				copyname(romfilenames[j++]+2,p->Name);
+			}
+			else
+			{
+				rommenu[j].action=MENU_ACTION(&selectrom);
+				copyname(romfilenames[j++],p->Name);
+			}
+		}
 		else
 			romfilenames[j][0]=0;
 	}

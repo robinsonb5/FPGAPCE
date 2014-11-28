@@ -104,6 +104,7 @@ int GetFATLink(unsigned int cluster);
 int FileNextSector(fileTYPE *file);
 int FileOpen(fileTYPE *file, const char *name);
 int FileRead(fileTYPE *file, unsigned char *pBuffer);
+void ChangeDirectory(unsigned long iStartCluster);
 //unsigned char FileReadEx(fileTYPE *file, unsigned char *pBuffer, unsigned long nSize);
 
 int LoadFile(const char *fn, unsigned char *buf);

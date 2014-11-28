@@ -68,6 +68,9 @@ unsigned long cluster_mask;             // binary mask of cluster number
 unsigned int dir_entries;             // number of entry's in directory table
 unsigned long fat_size;                 // size of fat
 
+unsigned int current_directory_cluster;
+unsigned int current_directory_start;
+
 unsigned char sector_buffer[512];       // sector buffer
 
 //unsigned char *sector_buffer=0x18000;
@@ -207,7 +210,7 @@ int FindDrive(void)
         // calculate start of data
         data_start = root_directory_start + root_directory_size;
     }
-
+	ChangeDirectory(0);
     return(1);
 }
 
@@ -249,14 +252,14 @@ DIRENTRY *NextDirEntry(int prev)
     unsigned long  iDirectory = 0;       // only root directory is supported
     DIRENTRY      *pEntry = NULL;        // pointer to current entry in sector buffer
     unsigned long  iDirectorySector;     // current sector of directory entries table
-    unsigned long  iDirectoryCluster;    // start cluster of subdirectory or FAT32 root directory
+//    unsigned long  iDirectoryCluster;    // start cluster of subdirectory or FAT32 root directory
     unsigned long  iEntry;               // entry index in directory cluster or FAT16 root directory
 
-    iDirectoryCluster = root_directory_cluster;
+//   iDirectoryCluster = root_directory_cluster;
 
 	// FIXME traverse clusters if necessary
 
-    iDirectorySector = root_directory_start+(prev>>4);
+    iDirectorySector = current_directory_start+(prev>>4);
 
 	if ((prev & 0x0F) == 0) // first entry in sector, load the sector
 	{
@@ -266,7 +269,8 @@ DIRENTRY *NextDirEntry(int prev)
 	pEntry+=(prev&0xf);
 	if (pEntry->Name[0] != SLOT_EMPTY && pEntry->Name[0] != SLOT_DELETED) // valid entry??
 	{
-		if (!(pEntry->Attributes & (ATTR_VOLUME | ATTR_DIRECTORY))) // not a volume nor directory
+//		if (!(pEntry->Attributes & (ATTR_VOLUME | ATTR_DIRECTORY))) // not a volume nor directory
+		if (!(pEntry->Attributes & ATTR_VOLUME)) // not a volume nor directory
 			return(pEntry);
 	}
 	return((DIRENTRY *)0);
@@ -275,7 +279,7 @@ DIRENTRY *NextDirEntry(int prev)
 
 int FileOpen(fileTYPE *file, const char *name)
 {
-    unsigned long  iDirectory = 0;       // only root directory is supported
+//    unsigned long  iDirectory = 0;       // only root directory is supported
     DIRENTRY      *pEntry = NULL;        // pointer to current entry in sector buffer
     unsigned long  iDirectorySector;     // current sector of directory entries table
     unsigned long  iDirectoryCluster;    // start cluster of subdirectory or FAT32 root directory
@@ -284,8 +288,8 @@ int FileOpen(fileTYPE *file, const char *name)
 
 //	buffered_fat_index=-1;
 
-    iDirectoryCluster = root_directory_cluster;
-    iDirectorySector = root_directory_start;
+    iDirectoryCluster = current_directory_cluster;
+    iDirectorySector = current_directory_start;
 	// We already have this, as dir_entries.
 //    nEntries = fat32 ?  cluster_size << 4 : root_directory_size << 4; // 16 entries per sector
 
@@ -429,6 +433,23 @@ int LoadFile(const char *fn, unsigned char *buf)
 	return(1);
 }
 #endif
+
+void ChangeDirectory(unsigned long iStartCluster)
+{
+	if(iStartCluster)
+	{
+		current_directory_cluster = iStartCluster;
+	    current_directory_start = data_start + cluster_size * (iStartCluster - 2);
+		dir_entries = cluster_size << 4;
+	}
+	else
+	{
+		current_directory_cluster = root_directory_cluster;
+		current_directory_start = root_directory_start;
+		dir_entries = fat32 ?  cluster_size << 4 : root_directory_size << 4; // 16 entries per sector
+	}
+}
+
 
 int IsFat32()
 {
