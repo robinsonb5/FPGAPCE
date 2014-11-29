@@ -470,6 +470,9 @@ void ChangeDirectory(DIRENTRY *p)
 	{
 		current_directory_cluster = SwapBB(p->StartCluster);
 		current_directory_cluster |= fat32 ? (SwapBB(p->HighCluster) & 0x0FFF) << 16 : 0;
+	}
+	if(current_directory_cluster)
+	{	
 	    current_directory_start = data_start + cluster_size * (current_directory_cluster - 2);
 		dir_entries = cluster_size << 4;
 	}

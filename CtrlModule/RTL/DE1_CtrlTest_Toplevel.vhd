@@ -186,7 +186,7 @@ VGA_VS<=vga_vsync;
 
 top : entity work.CtrlModule
 	generic map(
-		sysclk_frequency => 1000
+		sysclk_frequency => 1260
 	)
 	port map(
 		clk => memclk,

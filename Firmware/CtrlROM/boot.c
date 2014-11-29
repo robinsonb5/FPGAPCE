@@ -183,10 +183,18 @@ static struct menu_entry rommenu[]=
 };
 
 
+static void copyname(char *dst,const unsigned char *src,int l)
+{
+	int i;
+	for(i=0;i<l;++i)
+		*dst++=*src++;
+	*dst++=0;
+}
+
+
 static DIRENTRY *nthfile(int n)
 {
 	int i,j=0;
-	int cluster;
 	DIRENTRY *p;
 	for(i=0;(j<=n) && (i<dir_entries);++i)
 	{
@@ -200,9 +208,12 @@ static DIRENTRY *nthfile(int n)
 
 static void selectrom(int row)
 {
-	int i;
 	DIRENTRY *p=nthfile(romindex+row);
-	LoadROM(p->Name);
+	if(p)
+	{
+		copyname(longfilename,p->Name,11); // Make use of the long filename buffer to store a temporary copy of the filename,
+		LoadROM(longfilename);	// since loading it by name will overwrite the sector buffer which currently contains it!
+	}
 	Menu_Set(topmenu);
 	Menu_Hide();
 	OSD_Show(0);
@@ -211,23 +222,12 @@ static void selectrom(int row)
 
 static void selectdir(int row)
 {
-	int i,j=0;
-	int cluster;
 	DIRENTRY *p=nthfile(romindex+row);
 	if(p)
 		ChangeDirectory(p);
 	romindex=0;
 	listroms();
 	Menu_Draw();
-}
-
-
-static void copyname(char *dst,const unsigned char *src,int l)
-{
-	int i;
-	for(i=0;i<l;++i)
-		*dst++=*src++;
-	*dst++=0;
 }
 
 
