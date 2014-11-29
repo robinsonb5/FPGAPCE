@@ -69,6 +69,7 @@ typedef union {
 // global sector buffer, data for read/write actions is stored here.
 // BEWARE, this buffer is also used and thus trashed by all other functions
 extern unsigned char sector_buffer[512];
+extern char longfilename[260];
 //extern unsigned char *sector_buffer;
 extern unsigned int cluster_size;
 extern unsigned long cluster_mask;
@@ -104,7 +105,7 @@ int GetFATLink(unsigned int cluster);
 int FileNextSector(fileTYPE *file);
 int FileOpen(fileTYPE *file, const char *name);
 int FileRead(fileTYPE *file, unsigned char *pBuffer);
-void ChangeDirectory(unsigned long iStartCluster);
+void ChangeDirectory(DIRENTRY *p);
 //unsigned char FileReadEx(fileTYPE *file, unsigned char *pBuffer, unsigned long nSize);
 
 int LoadFile(const char *fn, unsigned char *buf);

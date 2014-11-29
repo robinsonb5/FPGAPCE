@@ -162,9 +162,20 @@ int Menu_Run()
 	}
 
 	if(TestKey(KEY_PAGEUP)&2)
-		currentrow=0;
+	{
+		if(currentrow)
+			currentrow=0;
+		else if((m+menurows)->action)
+			MENU_ACTION_CALLBACK((m+menurows)->action)(ROW_PAGEUP);
+	}
+
 	if(TestKey(KEY_PAGEDOWN)&2)
-		currentrow=menurows-1;
+	{
+		if(currentrow<(menurows-1))
+			currentrow=menurows-1;
+		else if((m+menurows)->action)
+			MENU_ACTION_CALLBACK((m+menurows)->action)(ROW_PAGEDOWN);
+	}
 
 	// Find the currently highlighted menu item
 	i=currentrow;

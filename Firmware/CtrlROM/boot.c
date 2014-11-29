@@ -61,6 +61,7 @@ void LoadSettings()
 
 void SaveSettings(int row)
 {
+	ChangeDirectory(0);
 	if(FileOpen(&file,"FPGAPCE CFG"))	// Do we have a configuration file?
 	{
 		int i;
@@ -182,16 +183,26 @@ static struct menu_entry rommenu[]=
 };
 
 
+static DIRENTRY *nthfile(int n)
+{
+	int i,j=0;
+	int cluster;
+	DIRENTRY *p;
+	for(i=0;(j<=n) && (i<dir_entries);++i)
+	{
+		p=NextDirEntry(i);
+		if(p)
+			++j;
+	}
+	return(p);
+}
+
+
 static void selectrom(int row)
 {
 	int i;
-	char *fn=rommenu[row].label;
-	if(fn && fn[0])
-	{
-//		OSD_Puts("Loading ");
-//		OSD_Puts(fn);
-		LoadROM(fn);
-	}
+	DIRENTRY *p=nthfile(romindex+row);
+	LoadROM(p->Name);
 	Menu_Set(topmenu);
 	Menu_Hide();
 	OSD_Show(0);
@@ -202,40 +213,20 @@ static void selectdir(int row)
 {
 	int i,j=0;
 	int cluster;
-	DIRENTRY *p;
-	for(i=0;(j<=(romindex+row)) && (i<dir_entries);++i)
-	{
-		p=NextDirEntry(i);
-		if(p)
-			++j;
-	}
-
-	cluster = SwapBB(p->StartCluster);
-	cluster |= IsFat32() ? (SwapBB(p->HighCluster) & 0x0FFF) << 16 : 0;
-	ChangeDirectory(cluster);
+	DIRENTRY *p=nthfile(romindex+row);
+	if(p)
+		ChangeDirectory(p);
 	romindex=0;
 	listroms();
 	Menu_Draw();
 }
 
 
-static void copyname(char *dst,const unsigned char *src)
+static void copyname(char *dst,const unsigned char *src,int l)
 {
 	int i;
-	for(i=0;i<11;++i)
+	for(i=0;i<l;++i)
 		*dst++=*src++;
-	*dst++=0;
-}
-
-
-static void copylfn(char *dst,const unsigned char *src, int c)
-{
-	int i;
-	for(i=0;i<c;++i)
-	{
-		*dst++=*src++;
-		++src;
-	}
 	*dst++=0;
 }
 
@@ -287,17 +278,25 @@ static void listroms()
 				rommenu[j].action=MENU_ACTION(&selectdir);
 				romfilenames[j][0]=16; // Right arrow
 				romfilenames[j][1]=' ';
-				copyname(romfilenames[j++]+2,p->Name);
+				if(longfilename[0])
+					copyname(romfilenames[j++]+2,longfilename,28);
+				else
+					copyname(romfilenames[j++]+2,p->Name,11);
 			}
 			else
 			{
 				rommenu[j].action=MENU_ACTION(&selectrom);
-				copyname(romfilenames[j++],p->Name);
+				if(longfilename[0])
+					copyname(romfilenames[j++],longfilename,28);
+				else
+					copyname(romfilenames[j++],p->Name,11);
 			}
 		}
 		else
 			romfilenames[j][0]=0;
 	}
+	for(;j<12;++j)
+		romfilenames[j][0]=0;
 }
 
 

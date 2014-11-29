@@ -72,6 +72,7 @@ unsigned int current_directory_cluster;
 unsigned int current_directory_start;
 
 unsigned char sector_buffer[512];       // sector buffer
+char longfilename[260];
 
 //unsigned char *sector_buffer=0x18000;
 
@@ -254,7 +255,7 @@ DIRENTRY *NextDirEntry(int prev)
     unsigned long  iDirectorySector;     // current sector of directory entries table
 //    unsigned long  iDirectoryCluster;    // start cluster of subdirectory or FAT32 root directory
     unsigned long  iEntry;               // entry index in directory cluster or FAT16 root directory
-
+	static int prevlfn=0;
 //   iDirectoryCluster = root_directory_cluster;
 
 	// FIXME traverse clusters if necessary
@@ -269,9 +270,38 @@ DIRENTRY *NextDirEntry(int prev)
 	pEntry+=(prev&0xf);
 	if (pEntry->Name[0] != SLOT_EMPTY && pEntry->Name[0] != SLOT_DELETED) // valid entry??
 	{
-//		if (!(pEntry->Attributes & (ATTR_VOLUME | ATTR_DIRECTORY))) // not a volume nor directory
+//		if (!(pEntry->Attributes & (ATTR_VOLUME | ATTR_DIRECTORY))) // not a volume nor director
 		if (!(pEntry->Attributes & ATTR_VOLUME)) // not a volume nor directory
+		{
+			if(!prevlfn)
+				longfilename[0]=0;
+			prevlfn=0;
+			// FIXME - should check the lfn checksum here.
 			return(pEntry);
+		}
+		else if (pEntry->Attributes == ATTR_LFN)	// Do we have a long filename entry?
+		{
+			unsigned char *p=&pEntry->Name[0];
+			int seq=p[0];
+			int offset=((seq&0x1f)-1)*13;
+			char *o=&longfilename[offset];
+			*o++=p[1];
+			*o++=p[3];
+			*o++=p[5];
+			*o++=p[7];
+			*o++=p[9];
+
+			*o++=p[0xe];
+			*o++=p[0x10];
+			*o++=p[0x12];
+			*o++=p[0x14];
+			*o++=p[0x16];
+			*o++=p[0x18];
+
+			*o++=p[0x1c];
+			*o++=p[0x1e];
+			prevlfn=1;
+		}
 	}
 	return((DIRENTRY *)0);
 }
@@ -434,12 +464,13 @@ int LoadFile(const char *fn, unsigned char *buf)
 }
 #endif
 
-void ChangeDirectory(unsigned long iStartCluster)
+void ChangeDirectory(DIRENTRY *p)
 {
-	if(iStartCluster)
+	if(p)
 	{
-		current_directory_cluster = iStartCluster;
-	    current_directory_start = data_start + cluster_size * (iStartCluster - 2);
+		current_directory_cluster = SwapBB(p->StartCluster);
+		current_directory_cluster |= fat32 ? (SwapBB(p->HighCluster) & 0x0FFF) << 16 : 0;
+	    current_directory_start = data_start + cluster_size * (current_directory_cluster - 2);
 		dir_entries = cluster_size << 4;
 	}
 	else
