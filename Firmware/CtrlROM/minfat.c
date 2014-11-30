@@ -72,19 +72,16 @@ unsigned int current_directory_cluster;
 unsigned int current_directory_start;
 
 unsigned char sector_buffer[512];       // sector buffer
+
+#ifndef DISABLE_LONG_FILENAMES
 char longfilename[260];
+#endif
 
-//unsigned char *sector_buffer=0x18000;
-
-//struct PartitionEntry partitions[4]; 	// [4];	// lbastart and sectors will be byteswapped as necessary
 int partitioncount;
 
 #define fat_buffer (*(FATBUFFER*)&sector_buffer) // Don't need a separate buffer for this.
-// unsigned long buffered_fat_index;       // index of buffered FAT sector
 
 #define puts OSD_Puts
-
-#define BootPrint(x) puts(x);
 
 
 #define debug printf
@@ -106,19 +103,13 @@ int compare(const char *s1, const char *s2,int b)
 int FindDrive(void)
 {
 	unsigned long boot_sector;              // partition boot sector
-//    buffered_fat_index = -1;
 	fat32=0;
-
-//	puts("Reading MBR\n");
 
     if (!sd_read_sector(0, sector_buffer)) // read MBR
 	{
 		puts("MBR fail\n");
         return(0);
 	}
-//	hexdump(sector_buffer,512);
-
-//	puts("MBR successfully read\n");
 
 	boot_sector=0;
 	partitioncount=1;
@@ -151,8 +142,6 @@ int FindDrive(void)
 //		puts("Read boot sector from first partition\n");
 	}
 
-//	printf("Hunting for filesystem\n");
-
     if (compare(sector_buffer+0x52, "FAT32   ",8)==0) // check for FAT16
 		fat32=1;
 	else if (compare(sector_buffer+0x36, "FAT16   ",8)!=0) // check for FAT32
@@ -177,8 +166,6 @@ int FindDrive(void)
 
     // calculate cluster mask
     cluster_mask = cluster_size - 1;
-
-//	printf("Cluster size: %d, Cluster mask, %d\n",cluster_size,cluster_mask);
 
     fat_start = boot_sector + sector_buffer[0x0E] + (sector_buffer[0x0F] << 8); // reserved sector count before FAT table (usually 32 for FAT32)
 	fat_number = sector_buffer[0x10];
@@ -220,30 +207,20 @@ int GetCluster(int cluster)
 {
 	int i;
 	int sb;
-    if (fat32)
-    {
-        sb = cluster >> 7; // calculate sector number containing FAT-link
-        i = cluster & 0x7F; // calculate link offsset within sector
-    }
-    else
-    {
-        sb = cluster >> 8; // calculate sector number containing FAT-link
-        i = cluster & 0xFF; // calculate link offsset within sector
-    }
+	if (fat32)
+	{
+		sb = cluster >> 7; // calculate sector number containing FAT-link
+		i = cluster & 0x7F; // calculate link offsset within sector
+	}
+	else
+	{
+		sb = cluster >> 8; // calculate sector number containing FAT-link
+		i = cluster & 0xFF; // calculate link offsset within sector
+	}
 
-    // read sector of FAT if not already in the buffer
-	// (Minimal FAT implementation doesn't have a separate buffer for FAT blocks, so always read.)
-//    if (sb != buffered_fat_index)
-//    {
-//		printf("GetCluster reading sector %d\n",fat_start+sb);
-        if (!sd_read_sector(fat_start + sb, (unsigned char*)&fat_buffer))
-            return(0);
-//		hexdump(sector_buffer,512);
-
-        // remember current buffer index
-//        buffered_fat_index = sb;
- //   }
-    i = fat32 ? SwapBBBB(fat_buffer.fat32[i]) & 0x0FFFFFFF : SwapBB(fat_buffer.fat16[i]); // get FAT link for 68000 
+    if (!sd_read_sector(fat_start + sb, (unsigned char*)&fat_buffer))
+		return(0);
+    i = fat32 ? SwapBBBB(fat_buffer.fat32[i]) & 0x0FFFFFFF : SwapBB(fat_buffer.fat16[i]); // get FAT link, big-endian
 	return(i);
 }
 
@@ -253,10 +230,8 @@ DIRENTRY *NextDirEntry(int prev)
     unsigned long  iDirectory = 0;       // only root directory is supported
     DIRENTRY      *pEntry = NULL;        // pointer to current entry in sector buffer
     unsigned long  iDirectorySector;     // current sector of directory entries table
-//    unsigned long  iDirectoryCluster;    // start cluster of subdirectory or FAT32 root directory
     unsigned long  iEntry;               // entry index in directory cluster or FAT16 root directory
 	static int prevlfn=0;
-//   iDirectoryCluster = root_directory_cluster;
 
 	// FIXME traverse clusters if necessary
 
@@ -270,8 +245,7 @@ DIRENTRY *NextDirEntry(int prev)
 	pEntry+=(prev&0xf);
 	if (pEntry->Name[0] != SLOT_EMPTY && pEntry->Name[0] != SLOT_DELETED) // valid entry??
 	{
-//		if (!(pEntry->Attributes & (ATTR_VOLUME | ATTR_DIRECTORY))) // not a volume nor director
-		if (!(pEntry->Attributes & ATTR_VOLUME)) // not a volume nor directory
+		if (!(pEntry->Attributes & ATTR_VOLUME)) // not a volume
 		{
 			if(!prevlfn)
 				longfilename[0]=0;
@@ -279,6 +253,7 @@ DIRENTRY *NextDirEntry(int prev)
 			// FIXME - should check the lfn checksum here.
 			return(pEntry);
 		}
+#ifndef DISABLE_LONG_FILENAMES
 		else if (pEntry->Attributes == ATTR_LFN)	// Do we have a long filename entry?
 		{
 			unsigned char *p=&pEntry->Name[0];
@@ -302,6 +277,7 @@ DIRENTRY *NextDirEntry(int prev)
 			*o++=p[0x1e];
 			prevlfn=1;
 		}
+#endif
 	}
 	return((DIRENTRY *)0);
 }
@@ -309,19 +285,13 @@ DIRENTRY *NextDirEntry(int prev)
 
 int FileOpen(fileTYPE *file, const char *name)
 {
-//    unsigned long  iDirectory = 0;       // only root directory is supported
     DIRENTRY      *pEntry = NULL;        // pointer to current entry in sector buffer
     unsigned long  iDirectorySector;     // current sector of directory entries table
     unsigned long  iDirectoryCluster;    // start cluster of subdirectory or FAT32 root directory
     unsigned long  iEntry;               // entry index in directory cluster or FAT16 root directory
-//    unsigned long  nEntries;             // number of entries per cluster or FAT16 root directory size
-
-//	buffered_fat_index=-1;
 
     iDirectoryCluster = current_directory_cluster;
     iDirectorySector = current_directory_start;
-	// We already have this, as dir_entries.
-//    nEntries = fat32 ?  cluster_size << 4 : root_directory_size << 4; // 16 entries per sector
 
     while (1)
     {
@@ -329,9 +299,7 @@ int FileOpen(fileTYPE *file, const char *name)
         {
             if ((iEntry & 0x0F) == 0) // first entry in sector, load the sector
             {
-//				printf("Reading directory sector %d\n",iDirectorySector);
                 sd_read_sector(iDirectorySector++, sector_buffer); // root directory is linear
-//				hexdump(sector_buffer,512);
                 pEntry = (DIRENTRY*)sector_buffer;
             }
             else
@@ -342,7 +310,6 @@ int FileOpen(fileTYPE *file, const char *name)
             {
                 if (!(pEntry->Attributes & (ATTR_VOLUME | ATTR_DIRECTORY))) // not a volume nor directory
                 {
-//					puts(pEntry->Name);
                     if (compare((const char*)pEntry->Name, name,11) == 0)
                     {
                         file->size = SwapBBBB(pEntry->FileSize); 		// for 68000
@@ -359,9 +326,6 @@ int FileOpen(fileTYPE *file, const char *name)
         if (fat32) // subdirectory is a linked cluster chain
         {
             iDirectoryCluster = GetCluster(iDirectoryCluster); // get next cluster in chain
-//			printf("GetFATLink returned %d\n",iDirectoryCluster);
-
-//            if (fat32 ? (iDirectoryCluster & 0x0FFFFFF8) == 0x0FFFFFF8 : (iDirectoryCluster & 0xFFF8) == 0xFFF8) // check if end of cluster chain
             if ((iDirectoryCluster & 0x0FFFFFF8) == 0x0FFFFFF8) // check if end of cluster chain
                  break; // no more clusters in chain
 
@@ -373,6 +337,7 @@ int FileOpen(fileTYPE *file, const char *name)
     }
     return(0);
 }
+
 
 int FileNextSector(fileTYPE *file)
 {
@@ -402,6 +367,7 @@ int FileRead(fileTYPE *file, unsigned char *pBuffer)
 }
 
 
+#ifndef DISABLE_WRITE
 int FileWrite(fileTYPE *file, unsigned char *pBuffer)
 {
     unsigned long sb;
@@ -412,57 +378,8 @@ int FileWrite(fileTYPE *file, unsigned char *pBuffer)
 
 	return(sd_write_sector(sb, pBuffer)); // read sector from drive
 }
-
-
-#if 0
-fileTYPE file;
-
-int LoadFile(const char *fn, unsigned char *buf)
-{
-	if(FileOpen(&file,fn))
-	{
-		puts("Opened file, loading...\n");
-		int imgsize=(file.size+511)/512;
-		int c=0;
-		int sector=0;
-
-		while(c<imgsize)
-		{
-			unsigned long sb;
-
-			sb = data_start;                         // start of data in partition
-			sb += cluster_size * (file.cluster-2);  // cluster offset
-			sb += sector & cluster_mask;      // sector offset in cluster
-
-//			printf("Reading block %d (%d, %d, %d)...",sb,data_start,file.cluster,sector);
-
-			if (!sd_read_sector(sb, buf)) // read sector from drive
-				return(0);
-//			hexdump(sector_buffer,512);
-
-//			puts("block read.\n");
-
-			++sector;
-
-		    // cluster's boundary crossed?
-    		if((sector&cluster_mask) == 0)
-		    {
-//				puts("Getting next cluster.\n");
-				file.cluster=GetCluster(file.cluster);
-		    }
-
-			buf+=512;
-			++c;
-		}
-	}
-	else
-	{
-		printf("Can't open %s\n",fn);
-		return(0);
-	}
-	return(1);
-}
 #endif
+
 
 void ChangeDirectory(DIRENTRY *p)
 {

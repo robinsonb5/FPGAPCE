@@ -264,6 +264,7 @@ int spi_init()
 }
 
 
+#ifndef DISABLE_WRITE
 int sd_write_sector(unsigned long lba,unsigned char *buf) // FIXME - Stub
 {
     int i,t,timeout;
@@ -309,6 +310,7 @@ int sd_write_sector(unsigned long lba,unsigned char *buf) // FIXME - Stub
 	SPI_CS(0);
 	return(0);
 }
+#endif
 
 
 extern void spi_readsector(long *buf);
@@ -341,10 +343,7 @@ int sd_read_sector(unsigned long lba,unsigned char *buf)
 		v=SPI_READ();
 		if(v==0xfe)
 		{
-//			puts("Reading sector data\n");
-//			spi_readsector((long *)buf);
 			int j;
-//			SPI(0xff);
 
 			for(j=0;j<128;++j)
 			{
