@@ -134,7 +134,6 @@ signal int_status : std_logic_vector(int_max downto 0);
 signal int_ack : std_logic;
 signal int_req : std_logic;
 signal int_enabled : std_logic :='0'; -- Disabled by default
-signal int_trigger : std_logic;
 
 
 -- PS2 signals
@@ -268,7 +267,7 @@ spi : entity work.spi_interface
 		-- Host interface
 		spiclk_in => spiclk_in,
 		host_to_spi => host_to_spi,
-		spi_to_host => spi_to_host,
+		spi_to_host => spi_to_host(7 downto 0),
 --		wide => spi_wide,
 		trigger => spi_trigger,
 		busy => spi_busy,
@@ -278,6 +277,8 @@ spi : entity work.spi_interface
 		mosi => spi_mosi,
 		spiclk_out => spi_clk
 	);
+
+spi_to_host(31 downto 8)<=(others=>'0');
 
 	-- PS2 keyboard
 		mykeyboard : entity work.io_ps2_com
@@ -334,6 +335,7 @@ generic map (
 port map (
 	clk => clk,
 	reset_n => reset,
+	enable => int_enabled,
 	trigger => int_triggers, -- Again, thanks ISE.
 	ack => int_ack,
 	int => int_req,
@@ -367,6 +369,7 @@ end process;
 		IMPL_CALL => true,
 		IMPL_SHIFT => true,
 		IMPL_XOR => true,
+		IMPL_EMULATION => minimal,  -- Only emulate byte/halfword accesses, using alternative emulation table
 		REMAP_STACK => false, -- We're not using SDRAM so no need to remap the Boot ROM / Stack RAM
 		EXECUTE_RAM => false, -- We might need to execute code from SDRAM, too.
 		maxAddrBit => maxAddrBit,
@@ -385,10 +388,8 @@ end process;
 		out_mem_readEnable  => mem_readEnable,
 		from_rom => zpu_from_rom,
 		to_rom => zpu_to_rom,
-		interrupt => int_trigger
+		interrupt => int_req
 	);
-
-int_trigger<=int_req and int_enabled;	
 
 process(clk)
 begin

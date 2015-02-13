@@ -14,6 +14,7 @@ generic (
 port (
 	clk : in std_logic;
 	reset_n : in std_logic; -- active low
+	enable : in std_logic :='1'; -- Interrupt enable
 	trigger : in std_logic_vector(max_int downto 0) := (others => '0'); -- Unused inputs will be optimised awayby the synthesis tools
 	ack : in std_logic;
 	int : buffer std_logic; -- 1 if an interrupt is pending
@@ -40,7 +41,7 @@ begin
 		-- If no interrupts are currently signalled
 		-- copy any pending interrupts to status.
 		-- We clear the pending signal at the same time.
-		if int='0' then
+		if int='0' and enable='1' then
 			status<=pending(status'high downto 0);
 			int<=pending(pending'high);
 			pending<=(others => '0');

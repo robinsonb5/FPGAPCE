@@ -329,7 +329,7 @@ set_global_assignment -name OUTPUT_IO_TIMING_NEAR_END_VMEAS "HALF VCCIO" -rise
 set_global_assignment -name OUTPUT_IO_TIMING_NEAR_END_VMEAS "HALF VCCIO" -fall
 set_global_assignment -name OUTPUT_IO_TIMING_FAR_END_VMEAS "HALF SIGNAL SWING" -rise
 set_global_assignment -name OUTPUT_IO_TIMING_FAR_END_VMEAS "HALF SIGNAL SWING" -fall
-set_global_assignment -name STRATIX_DEVICE_IO_STANDARD "2.5 V"
+set_global_assignment -name STRATIX_DEVICE_IO_STANDARD "3.3-V LVTTL"
 set_global_assignment -name SMART_RECOMPILE ON
 
 set_global_assignment -name PHYSICAL_SYNTHESIS_COMBO_LOGIC ON
@@ -410,7 +410,6 @@ set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[24] -t
 set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[25] -to "Virtual_Toplevel:myvirtualtoplevel|CtrlModule:mycontrolmodule|host_reset_n" -section_id auto_signaltap_0
 set_global_assignment -name SDC_FILE ../../Board/c3board/constraints.sdc
 set_global_assignment -name VHDL_FILE ../../src//sdram_controller.vhd
-set_global_assignment -name VHDL_FILE ../../src//chameleon_old_sdram.vhd
 set_global_assignment -name VHDL_FILE ../../src//psg.vhd
 set_global_assignment -name VHDL_FILE ../../src//satram.vhd
 set_global_assignment -name VHDL_FILE ../../src//huc6270.vhd
@@ -804,5 +803,10 @@ set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_INVERSION_MASK=00
 set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_INVERSION_MASK_LENGTH=633" -section_id auto_signaltap_0
 set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_NODE_CRC_LOWORD=20992" -section_id auto_signaltap_0
 set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_NODE_CRC_HIWORD=47619" -section_id auto_signaltap_0
+set_global_assignment -name VHDL_FILE ../../src/chameleon_pce_sdram.vhd
+set_global_assignment -name QIP_FILE ../../Board/c3board/pll2.qip
+set_global_assignment -name VHDL_FILE ../../Board/c3board/statusleds_pwm.vhd
+set_global_assignment -name VHDL_FILE ../../Board/c3board/Debounce.vhd
+set_global_assignment -name VHDL_FILE ../../Board/c3board/poweronreset.vhd
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
 set_global_assignment -name SLD_FILE /home/amr/FPGA/Projects/FPGAPCE/syn/c3board/stp1_auto_stripped.stp

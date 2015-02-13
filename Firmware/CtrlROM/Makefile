@@ -49,7 +49,7 @@ LINKMAP  = $(ZPUFLEXDIR)/Firmware/standalone_simple.ld
 HWZPUOPTS= -mno-poppcrel -mno-pushspadd -mno-callpcrel -mno-neg -mno-div -mno-mod # No-neg requires bugfixed toolchain
 HWCFLAGS  = -I. -I$(COMMON_DIR)/ -g -c -Os $(HWZPUOPTS) -ffunction-sections -fdata-sections $(FWOPTS)
 
-ZPUOPTS= -mno-poppcrel -mno-pushspadd -mno-callpcrel -mno-shortop -mno-byteop -mno-neg -mno-div -mno-mod # No-neg requires bugfixed toolchain
+ZPUOPTS= -mno-poppcrel -mno-pushspadd -mno-callpcrel -mno-neg -mno-div -mno-mod # No-neg requires bugfixed toolchain
 CFLAGS  = -I. -I$(COMMON_DIR)/ -g -c -Os $(ZPUOPTS) -ffunction-sections -fdata-sections $(FWOPTS)
 
 LFLAGS  = -nostartfiles -nostdlib -Wl,--relax -Wl,--gc-sections -Os -g

@@ -253,11 +253,30 @@ END COMPONENT;
 
 begin
 
-	power_led(5 downto 2)<=unsigned(debugvalue(15 downto 12));
+	power_led(5 downto 0)<="001111";
 	disk_led(5 downto 2)<=unsigned(debugvalue(11 downto 8));
 	net_led(5 downto 2)<=unsigned(debugvalue(7 downto 4));
 	odd_led(5 downto 2)<=unsigned(debugvalue(3 downto 0));
 
+	myreset : entity work.poweronreset
+	port map(
+		clk => sysclk,
+		reset_button => reset_n and pll1_locked and pll2_locked,
+		reset_out => reset,
+		power_button => power_button,
+		power_hold => power_hold		
+	);
+
+	myleds : entity work.statusleds_pwm
+	port map(
+		clk => sysclk,
+		power_led => power_led,
+		disk_led => disk_led,
+		net_led => net_led,
+		odd_led => odd_led,
+		leds_out => leds
+	);
+	
 	ps2m_dat_in<=ps2m_dat;
 	ps2m_dat <= '0' when ps2m_dat_out='0' else 'Z';
 	ps2m_clk_in<=ps2m_clk;
@@ -291,20 +310,20 @@ begin
 	mypll : entity work.PLL
 		port map (
 			inclk0 => clk_50,
-			c0 => sysclk,
+			c2 => sysclk,
 			c1 => memclk,
-			c2 => sdram1_clk
+			c0 => sdram1_clk
 		);
 		
-	mypll2 : entity work.PLL
+	mypll2 : entity work.PLL2
 		port map (
 			inclk0 => clk_50,
-			c2 => sdram2_clk
+			c0 => sdram2_clk
 		);
 
 myvirtualtoplevel : entity work.Virtual_Toplevel
 	port map(
-		reset => reset_n,
+		reset => reset,
 		CLK => sysclk,
 		SDR_CLK => memclk,
 
@@ -329,8 +348,8 @@ myvirtualtoplevel : entity work.Virtual_Toplevel
 		ps2k_dat_in => ps2k_dat_in,
 		 
 		--    -- Joystick ports (Port_A, Port_B)
-		joya => "111111", -- joya,
-		joyb => "111111", -- joyb,
+		joya => "11111111", -- joya,
+		joyb => "11111111", -- joyb,
 
 		-- UART
 		RS232_RXD => rs232_rxd,
@@ -379,7 +398,7 @@ leftsd: component hybrid_pwm_sd
 	port map
 	(
 		clk => memclk,
-		n_reset => reset_n,
+		n_reset => reset,
 		din(15) => not audio_l(15),
 		din(14 downto 0) => std_logic_vector(audio_l(14 downto 0)),
 		dout => aud_l
@@ -389,7 +408,7 @@ rightsd: component hybrid_pwm_sd
 	port map
 	(
 		clk => memclk,
-		n_reset => reset_n,
+		n_reset => reset,
 		din(15) => not audio_r(15),
 		din(14 downto 0) => std_logic_vector(audio_r(14 downto 0)),
 		dout => aud_r

@@ -1,4 +1,4 @@
--- Generic RTL expression of Dual port RAM with one read and one write port, unregistered output.
+-- Generic RTL expression of Dual port RAM with dual read and write ports, unregistered output.
 
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;

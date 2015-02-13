@@ -75,7 +75,7 @@ signal xpos : unsigned(15 downto 0);
 signal ypos : unsigned(15 downto 0);
 signal charram_wr : std_logic;
 
-signal char : std_logic_vector(7 downto 0);
+signal char : std_logic_vector(6 downto 0);
 signal charram_rdaddr : std_logic_vector(8 downto 0);
 signal charpixel : std_logic;
 
@@ -261,20 +261,21 @@ charram : entity Work.DualPortRAM_2Read_Unreg
 	generic map
 		(
 			AddrBits => 9,
-			DataWidth => 8
+			DataWidth => 7
 		)
 	port map (
 		clock => clk,
 		data1 => (others => 'X'),
-		data2 => data_in(7 downto 0),
+		data2 => data_in(6 downto 0),
 		address1 => charram_rdaddr,
 		address2 => addr(8 downto 0),
 		wren1 => '0',
 		wren2 => char_wr,
 		q1 => char,
-		q2 => char_q
+		q2 => char_q(6 downto 0)
 	);
-
+char_q(7)<='0';
+	
 charrom: entity Work.CharROM_ROM
 	generic map
 	(

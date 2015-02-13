@@ -348,7 +348,7 @@ sd_card_d: component sd_card
 		io_dout => sd_data_out,
 		io_dout_strobe => sd_data_out_strobe,
  
-		allow_sdhc  => '0',   -- MSX does not support SDHC
+		allow_sdhc  => '1',
 		
  		-- connection to host
  		sd_cs  => sd_cs,
