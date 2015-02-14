@@ -350,8 +350,8 @@ Virtual_Toplevel myvt
 	.ps2k_dat_out(PS2K_DAT_OUT),
 	
 	// Joystick
-	.joya({2'b11,Joya}),
-	.joyb({2'b11,Joyb}),
+	.joya({2'b11,Joya[5:4],Joya[0],Joya[1],Joya[2],Joya[3]}),
+	.joyb({2'b11,Joyb[5:4],Joyb[0],Joyb[1],Joyb[2],Joyb[3]}),
 
 	// SD card
 	.spi_cs(SD_DAT3),
