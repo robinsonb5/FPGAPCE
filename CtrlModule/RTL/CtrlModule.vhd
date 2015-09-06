@@ -369,9 +369,8 @@ end process;
 		IMPL_CALL => true,
 		IMPL_SHIFT => true,
 		IMPL_XOR => true,
-		IMPL_EMULATION => minimal,  -- Only emulate byte/halfword accesses, using alternative emulation table
 		REMAP_STACK => false, -- We're not using SDRAM so no need to remap the Boot ROM / Stack RAM
-		EXECUTE_RAM => false, -- We might need to execute code from SDRAM, too.
+		EXECUTE_RAM => false, -- We don't need to execute code from SDRAM either.
 		maxAddrBit => maxAddrBit,
 		maxAddrBitBRAM => 13
 	)
