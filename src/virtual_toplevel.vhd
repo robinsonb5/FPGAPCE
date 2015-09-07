@@ -710,7 +710,7 @@ end process;
 
 mycontrolmodule : entity work.CtrlModule
 	generic map (
-		sysclk_frequency => 1000 -- Sysclk frequency * 10
+		sysclk_frequency => 1270 -- Sysclk frequency * 10
 	)
 	port map (
 		clk => SDR_CLK,
