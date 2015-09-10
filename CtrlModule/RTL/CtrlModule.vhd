@@ -172,7 +172,7 @@ begin
 
 -- ROM
 
-	myrom : entity work.CtrlROM_ROM
+	myrom : entity work.CtrlROM
 	generic map
 	(
 		maxAddrBitBRAM => 13
@@ -369,7 +369,6 @@ end process;
 		IMPL_CALL => true,
 		IMPL_SHIFT => true,
 		IMPL_XOR => true,
---		IMPL_EMULATION => minimal, -- EXPERIMENTAL
 		REMAP_STACK => false, -- We're not using SDRAM so no need to remap the Boot ROM / Stack RAM
 		EXECUTE_RAM => false, -- We don't need to execute code from SDRAM either.
 		maxAddrBit => maxAddrBit,
