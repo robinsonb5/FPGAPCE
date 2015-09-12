@@ -39,8 +39,17 @@ end entity;
 --	end record;
 
 architecture arch of MergeROM is
-
+signal romsel_a : std_logic;
+signal romsel_b : std_logic;
 begin
+
+process(clk)
+begin
+	if rising_edge(clk) then
+		romsel_a<=from_zpu.memAAddr(maxAddrBitBRAM);
+		romsel_b<=from_zpu.memBAddr(maxAddrBitBRAM);
+	end if;
+end process;
 
 -- use high bit of incoming address to switch between two ROMS
 to_rom1.memAAddr<=from_zpu.memAAddr;
@@ -57,8 +66,8 @@ to_rom2.memBWrite<=from_zpu.memBWrite;
 to_rom2.memAWriteEnable<=from_zpu.memAWriteEnable when from_zpu.memAAddr(maxAddrBitBRAM)='1' else '0';
 to_rom2.memBWriteEnable<=from_zpu.memBWriteEnable when from_zpu.memBAddr(maxAddrBitBRAM)='1' else '0';
 
-to_zpu.memARead <= from_rom1.memARead when from_zpu.memAAddr(maxAddrBitBRAM)='0' else from_rom2.memARead;
-to_zpu.memBRead <= from_rom1.memBRead when from_zpu.memBAddr(maxAddrBitBRAM)='0' else from_rom2.memBRead;
+to_zpu.memARead <= from_rom1.memARead when romsel_a='0' else from_rom2.memARead;
+to_zpu.memBRead <= from_rom1.memBRead when romsel_b='0' else from_rom2.memBRead;
 
 end arch;
 
