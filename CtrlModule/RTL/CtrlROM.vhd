@@ -46,7 +46,7 @@ begin
 	myrom2 : entity work.CtrlROM_ROM2
 	generic map
 	(
-		maxAddrBitBRAM => maxAddrBitBRAM-2
+		maxAddrBitBRAM => maxAddrBitBRAM-3
 	)
 	port map (
 		clk => clk,

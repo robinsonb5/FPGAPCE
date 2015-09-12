@@ -121,6 +121,7 @@ signal mem_readEnable       : std_logic;
 
 signal zpu_to_rom : ZPU_ToROM;
 signal zpu_from_rom : ZPU_FromROM;
+signal zpu_from_rom_split : ZPU_FromROM;
 
 signal host_bootdata_pending : std_logic;
 signal host_bootdata_ack_r : std_logic;
@@ -172,7 +173,7 @@ begin
 
 -- ROM
 
-	myrom : entity work.CtrlROM
+	mysplitrom : entity work.CtrlROM
 	generic map
 	(
 		maxAddrBitBRAM => 13
@@ -182,6 +183,18 @@ begin
 		from_zpu => zpu_to_rom,
 		to_zpu => zpu_from_rom
 	);
+
+
+--	myrom : entity work.CtrlROM_ROM
+--	generic map
+--	(
+--		maxAddrBitBRAM => 13
+--	)
+--	port map (
+--		clk => clk,
+--		from_zpu => zpu_to_rom,
+--		to_zpu => zpu_from_rom_split
+--	);
 
 
 -- Reset counter.
@@ -562,6 +575,13 @@ begin
 							mem_read(0)<=mouse_idle;
 							mem_busy<='0';
 
+						-- Temporary hack to debug the split ROM
+--						when X"54" =>
+--							mem_read<=zpu_from_rom_split.memARead;
+--							mem_busy<='0';
+--						when X"58" =>
+--							mem_read<=zpu_from_rom_split.memBRead;
+--							mem_busy<='0';
 						when others =>
 							mem_busy<='0';
 							null;
