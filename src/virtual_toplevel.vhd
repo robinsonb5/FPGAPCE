@@ -781,7 +781,9 @@ vga_green_i <= GREEN when SW(0)='1' else VGA_GREEN;
 vga_blue_i <= BLUE when SW(0)='1' else VGA_BLUE;
 vga_hsync_i <= HS_N when SW(0)='1' else VGA_HS_N;
 vga_vsync_i <= VS_N when SW(0)='1' else VGA_VS_N;
-VGA_HS <= vga_hsync_i;
-VGA_VS <= vga_vsync_i;
+
+VGA_HS <= not (vga_hsync_i xor vga_vsync_i) when SW(0)='1' else vga_hsync_i;
+VGA_VS <= '1' when SW(0)='1' else vga_vsync_i;
+
 
 end rtl;
