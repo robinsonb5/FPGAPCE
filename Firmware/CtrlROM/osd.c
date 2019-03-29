@@ -123,7 +123,7 @@ void OSD_Show(int visible)
 
 //	printf("Frame width is %d, frame height is %d\n",hh,vh);
 
-	hl=((hh-100)-120)>>(pixelclock-1);
+	hl=((hh-100)-180)>>(pixelclock-1);
 	vl=((vh-60)-48)/2;
 
 //	printf("OSD Offsets: %d, %d\n",hl,vl);
