@@ -17,6 +17,7 @@ entity Virtual_Toplevel is
 	port(
 		reset : in std_logic;
 		CLK : in std_logic;
+		CLK84 : in std_logic;
 		SDR_CLK : in std_logic;
 
 		DRAM_ADDR	: out std_logic_vector(rowAddrBits-1 downto 0);
@@ -710,10 +711,10 @@ end process;
 
 mycontrolmodule : entity work.CtrlModule
 	generic map (
-		sysclk_frequency => 1270 -- Sysclk frequency * 10
+		sysclk_frequency => 840 -- Sysclk frequency * 10
 	)
 	port map (
-		clk => SDR_CLK,
+		clk => CLK84,
 		reset_n => reset,
 
 		-- SPI signals
@@ -760,7 +761,7 @@ mycontrolmodule : entity work.CtrlModule
 overlay : entity work.OSD_Overlay
 	port map
 	(
-		clk => SDR_CLK,
+		clk => CLK84,
 		red_in => vga_red_i,
 		green_in => vga_green_i,
 		blue_in => vga_blue_i,
@@ -776,11 +777,26 @@ overlay : entity work.OSD_Overlay
 	);
 
 -- Select between VGA and TV output	
-vga_red_i <= RED when SW(0)='1' else VGA_RED;
-vga_green_i <= GREEN when SW(0)='1' else VGA_GREEN;
-vga_blue_i <= BLUE when SW(0)='1' else VGA_BLUE;
-vga_hsync_i <= HS_N when SW(0)='1' else VGA_HS_N;
-vga_vsync_i <= VS_N when SW(0)='1' else VGA_VS_N;
+-- and pipeline signals while we're at it.
+process (CLK84)
+begin
+	if rising_edge(CLK84) then
+		if SW(0)='1' then
+			vga_red_i <= RED;
+			vga_green_i <= GREEN;
+			vga_blue_i <= BLUE;
+			vga_hsync_i <= HS_N;
+			vga_vsync_i <= VS_N;
+		else
+			vga_red_i <= VGA_RED;
+			vga_green_i <= VGA_GREEN;
+			vga_blue_i <= VGA_BLUE;
+			vga_hsync_i <= VGA_HS_N;
+			vga_vsync_i <= VGA_VS_N;
+		end if;
+	end if;
+end process;
+
 VGA_HS <= vga_hsync_i;
 VGA_VS <= vga_vsync_i;
 

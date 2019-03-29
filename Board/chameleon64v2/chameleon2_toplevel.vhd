@@ -11,6 +11,7 @@ architecture rtl of chameleon2 is
 -- System clocks
 
 	signal clk42m : std_logic;
+	signal clk84m : std_logic;
 	signal memclk : std_logic;
 	signal pll_locked : std_logic;
 	signal ena_1mhz : std_logic;
@@ -90,6 +91,7 @@ architecture rtl of chameleon2 is
 	signal joy3 : unsigned(7 downto 0);
 	signal joy4 : unsigned(7 downto 0);
 	signal ir : std_logic;
+	signal ir_d : std_logic;
 
 	-- Sigma Delta audio
 	COMPONENT hybrid_pwm_sd
@@ -177,7 +179,7 @@ begin
 -- -----------------------------------------------------------------------
 	io_ps2iec_inst : entity work.chameleon2_io_ps2iec
 		port map (
-			clk => memclk,
+			clk => clk42m,
 
 			ps2iec_sel => ps2iec_sel,
 			ps2iec => ps2iec,
@@ -198,7 +200,7 @@ begin
 -- -----------------------------------------------------------------------
 	io_shiftreg_inst : entity work.chameleon2_io_shiftreg
 		port map (
-			clk => memclk,
+			clk => clk42m,
 
 			ser_out_clk => ser_out_clk,
 			ser_out_dat => ser_out_dat,
@@ -234,7 +236,7 @@ begin
 
 				reset => reset,
 
-				ir_data => ir_data,
+				ir_data => ir,
 				ioef => ioef,
 				romlh => romlh,
 
@@ -265,16 +267,26 @@ begin
 				joystick2 => c64_joy2,
 				joystick3 => joystick3,
 				joystick4 => joystick4,
---				keys => keys,
+				keys => c64_keys,
 --				restore_key_n => restore_n
-				keys => open,
 				restore_key_n => open
 			);
 	end block;
 
+-- Synchronise IR signal
+process (clk42m)
+begin
+	if rising_edge(clk42m) then
+		ir_d<=ir_data;
+		ir<=ir_d;
+	end if;
+end process;
+
 		
 --joy1<=not gp1_run & not gp1_select & (c64_joy1 and cdtv_joy1);
-joy1<="11" & c64_joy1;
+gp1_run<=c64_keys(11) and c64_keys(56);
+gp1_select<=c64_keys(60);
+joy1<=gp1_run & gp1_select & c64_joy1;
 joy2<="11" & c64_joy2;
 joy3<="11" & joystick3;
 joy4<="11" & joystick4;
@@ -286,7 +298,7 @@ joy4<="11" & joystick4;
       c0     => clk42m,         -- 42MHz internal
       c1     => memclk,         -- 126MHz = 21.43MHz x 4
       c2     => ram_clk,        -- 126MHz external
---		c3		=> fastclk,		-- ~110Mhz, for MUX clock
+		c3		=> clk84m,		-- ~84Mhz, for ctrl module
       locked => pll_locked
     );
 
@@ -296,6 +308,7 @@ virtualtoplevel : entity work.Virtual_Toplevel
 	port map(
 		reset => n_reset,
 		CLK => clk42m,
+		CLK84 => clk84m,
 		SDR_CLK => memclk,
 
     -- SDRAM DE1 ports
@@ -356,7 +369,7 @@ virtualtoplevel : entity work.Virtual_Toplevel
 			outbits => 5
 		)
 		port map(
-			clk=>memclk,
+			clk=>clk84m,
 			hsync=>vga_hsync,
 			vsync=>vga_vsync,
 			vid_ena=>vga_window,
