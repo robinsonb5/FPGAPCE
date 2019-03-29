@@ -83,8 +83,6 @@ architecture rtl of chameleon2 is
 	signal c64_joy2 : unsigned(5 downto 0);
 	signal joystick3 : unsigned(5 downto 0);
 	signal joystick4 : unsigned(5 downto 0);
-	signal cdtv_joy1 : unsigned(5 downto 0);
-	signal cdtv_joy2 : unsigned(5 downto 0);
 	signal gp1_run : std_logic;
 	signal gp1_select : std_logic;
 	signal joy1 : unsigned(7 downto 0);
@@ -159,17 +157,17 @@ begin
 -- -----------------------------------------------------------------------
 	my1Mhz : entity work.chameleon_1mhz
 		generic map (
-			clk_ticks_per_usec => 42
+			clk_ticks_per_usec => 126
 		)
 		port map (
-			clk => clk42m,
+			clk => memclk,
 			ena_1mhz => ena_1mhz,
 			ena_1mhz_2 => open
 		);
 
 	my1Khz : entity work.chameleon_1khz
 		port map (
-			clk => clk42m,
+			clk => memclk,
 			ena_1mhz => ena_1mhz,
 			ena_1khz => ena_1khz
 		);
@@ -264,7 +262,7 @@ begin
 				phi_end_1 => phi_end_1,
 
 				joystick1 => c64_joy1,
-				joystick2 => C64_joy2,
+				joystick2 => c64_joy2,
 				joystick3 => joystick3,
 				joystick4 => joystick4,
 --				keys => keys,
@@ -275,8 +273,9 @@ begin
 	end block;
 
 		
-joy1<=not gp1_run & not gp1_select & (c64_joy1 and cdtv_joy1);
-joy2<="11" & (c64_joy2 and cdtv_joy2);
+--joy1<=not gp1_run & not gp1_select & (c64_joy1 and cdtv_joy1);
+joy1<="11" & c64_joy1;
+joy2<="11" & c64_joy2;
 joy3<="11" & joystick3;
 joy4<="11" & joystick4;
 	
