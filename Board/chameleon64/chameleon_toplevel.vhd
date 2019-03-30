@@ -80,7 +80,8 @@ architecture rtl of chameleon_toplevel is
 	signal reset_button_n : std_logic;
 	signal reset : std_logic;
 	signal fastclk : std_logic;
-	signal clk21m      : std_logic;
+	signal clk42m      : std_logic;
+	signal clk84m      : std_logic;
 	signal memclk      : std_logic;
 	signal pll_locked : std_logic;
 	
@@ -341,10 +342,10 @@ joy4<="11" & joystick4;
   U00 : entity work.pll
     port map(
       inclk0 => clk8,       -- 50 MHz external
-      c0     => clk21m,         -- 21.43MHz internal (50*3/7)
+      c0     => clk42m,         -- 21.43MHz internal (50*3/7)
       c1     => memclk,         -- 85.72MHz = 21.43MHz x 4
       c2     => sdram_clk,        -- 85.72MHz external
---		c3		=> fastclk,		-- ~110Mhz, for MUX clock
+		c3		=> clk84m,		-- ~84Mhz, for ctrl module
       locked => pll_locked
     );
 
@@ -353,8 +354,9 @@ sd_addr(12)<='0';
 virtualtoplevel : entity work.Virtual_Toplevel
 	port map(
 		reset => n_reset,
-		CLK => clk21m,
+		CLK => clk42m,
 		SDR_CLK => memclk,
+		CLK84 => clk84m,
 
     -- SDRAM DE1 ports
 --	 pMemClk => DRAM_CLK,
