@@ -149,7 +149,7 @@ end process;
 process(clk)
 begin
 	if rising_edge(clk) then
-		if pixelcounter=pixelclock then
+		if pixelcounter=pixelclock or (hsync_n /= hsync_p) then
 			pixelcounter<="0000";
 			pix<='1';
 		else
