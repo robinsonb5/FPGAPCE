@@ -284,8 +284,8 @@ end process;
 
 		
 --joy1<=not gp1_run & not gp1_select & (c64_joy1 and cdtv_joy1);
-gp1_run<=c64_keys(11) and c64_keys(56);
-gp1_select<=c64_keys(60);
+gp1_run<=c64_keys(11) and c64_keys(56) when c64_joy1="111111" else '1';
+gp1_select<=c64_keys(60) when c64_joy1="111111" else '1';
 joy1<=gp1_run & gp1_select & c64_joy1;
 joy2<="11" & c64_joy2;
 joy3<="11" & joystick3;
