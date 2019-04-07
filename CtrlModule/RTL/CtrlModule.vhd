@@ -72,7 +72,13 @@ entity CtrlModule is
 		
 		-- Gamepad emulation
 		gp1emu : out std_logic_vector(7 downto 0);
-		gp2emu : out std_logic_vector(7 downto 0)
+		gp2emu : out std_logic_vector(7 downto 0);
+		
+		-- Debug registers
+		debug1 : in std_logic_vector(31 downto 0) := (others =>'0');
+		debug2 : in std_logic_vector(31 downto 0) := (others =>'0');
+		debug3 : in std_logic_vector(31 downto 0) := (others =>'0');
+		debug4 : in std_logic_vector(31 downto 0) := (others =>'0')
 );
 end entity;
 
@@ -520,7 +526,20 @@ begin
 
 		elsif mem_readEnable='1' then -- Read from CPU?
 			case mem_addr(maxAddrBit)&mem_addr(10 downto 8) is
-
+				when X"A" =>	-- Debug registers
+					if mem_addr(7 downto 0)=X"00" then
+						mem_read <=debug1;
+					elsif mem_addr(7 downto 0)=X"04" then
+						mem_read <=debug2;
+					elsif mem_addr(7 downto 0)=X"08" then
+						mem_read <= debug3;
+					elsif mem_addr(7 downto 0)=X"0C" then
+						mem_read <= debug4;
+					else
+						mem_read <= (others =>'0');
+					end if;
+					mem_busy<='0';
+					
 				when X"B" =>	-- OSD registers
 					mem_read(31 downto 16)<=(others => '0');
 					mem_read(15 downto 0)<=osd_data;

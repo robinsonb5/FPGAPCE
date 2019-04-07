@@ -17,6 +17,9 @@
 #include "osd.h"
 #include "menu.h"
 
+#include "debugmode.h"
+
+
 fileTYPE file;
 static struct menu_entry topmenu[];
 int dipswitch;
@@ -355,6 +358,7 @@ static struct menu_entry topmenu[]=
 	{MENU_ENTRY_TOGGLE,"Scanlines",HW_HOST_SWB_SCANLINES},
 	{MENU_ENTRY_CYCLE,(char *)cart_labels,2},
 	{MENU_ENTRY_CALLBACK,"Load ROM \x10",MENU_ACTION(&showrommenu)},
+	{MENU_ENTRY_CALLBACK,"Debug \x10",MENU_ACTION(&debugmode)},
 	{MENU_ENTRY_CALLBACK,"Exit",MENU_ACTION(&Menu_Hide)},
 	{MENU_ENTRY_NULL,0,0}
 };

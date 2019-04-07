@@ -38,7 +38,7 @@ HW_SRC = osd.c
 HW_OBJ = $(COMMON_OBJ) $(patsubst %.c,$(BUILD_DIR)/%.hwo,$(HW_SRC))
 
 MAIN_PRJ = CtrlROM
-MAIN_SRC = boot.c minfat.c spi.c uart.c swap.c small_printf.c ps2.c keyboard.c interrupts.c hexdump.c menu.c
+MAIN_SRC = boot.c minfat.c spi.c uart.c swap.c small_printf.c ps2.c keyboard.c interrupts.c hexdump.c menu.c debugmode.c
 MAIN_OBJ = $(COMMON_OBJ) $(HW_OBJ) $(patsubst %.c,$(BUILD_DIR)/%.o,$(MAIN_SRC))
 
 LINKMAP  = $(ZPUFLEXDIR)/Firmware/standalone_simple.ld

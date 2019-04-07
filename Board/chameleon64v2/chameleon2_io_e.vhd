@@ -165,6 +165,12 @@ entity chameleon2_io is
 		restore_key_n : out std_logic;
 		amiga_reset_n : out std_logic;
 		amiga_trigger : out std_logic;
-		amiga_scancode : out unsigned(7 downto 0)
+		amiga_scancode : out unsigned(7 downto 0);
+		
+		-- Debug
+		debug1 : out std_logic_vector(31 downto 0);
+		debug2 : out std_logic_vector(31 downto 0);
+		debug3 : out std_logic_vector(31 downto 0)
+
 	);
 end entity;
