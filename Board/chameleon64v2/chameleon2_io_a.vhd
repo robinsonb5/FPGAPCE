@@ -105,6 +105,10 @@ begin
 	joystick4 <= docking_joystick4 and c64_joystick4;
 	keys <= docking_keys and c64_keys and ir_keys;
 
+	debug1 <= "00" & std_logic_vector(docking_joystick1) & "00" & std_logic_vector(docking_joystick2) & "00" & std_logic_vector(docking_joystick3) & "00" & std_logic_vector(docking_joystick4);
+	debug2 <= "00" & std_logic_vector(ir_joystick1) & "00" & std_logic_vector(ir_joystick2) & std_logic_vector(c64_keys(63 downto 48));
+	debug3 <= "00" & std_logic_vector(c64_joystick1) & "00" & std_logic_vector(c64_joystick2) & "00" & std_logic_vector(c64_joystick3) & "00" & std_logic_vector(c64_joystick4);
+
 -- -----------------------------------------------------------------------
 -- PHI2 clock sync
 -- -----------------------------------------------------------------------

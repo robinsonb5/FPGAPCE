@@ -58,7 +58,13 @@ entity Virtual_Toplevel is
 		spi_miso		: in std_logic := '1';
 		spi_mosi		: out std_logic;
 		spi_clk		: out std_logic;
-		spi_cs 		: out std_logic
+		spi_cs 		: out std_logic;
+
+		-- Debug registers
+		debug1 : in std_logic_vector(31 downto 0) := (others =>'0');
+		debug2 : in std_logic_vector(31 downto 0) := (others =>'0');
+		debug3 : in std_logic_vector(31 downto 0) := (others =>'0');
+		debug4 : in std_logic_vector(31 downto 0) := (others =>'0')
 	);
 end entity;
 
@@ -754,7 +760,13 @@ mycontrolmodule : entity work.CtrlModule
 		
 		-- Gamepad emulation
 		gp1emu => gp1emu,
-		gp2emu => gp2emu
+		gp2emu => gp2emu,
+		
+		-- Debug
+		debug1 => debug1,
+		debug2 => debug2,
+		debug3 => debug3,
+		debug4 => debug4
 );
 
 

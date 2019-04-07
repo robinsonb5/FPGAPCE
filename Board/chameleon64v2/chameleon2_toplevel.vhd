@@ -12,6 +12,7 @@ architecture rtl of chameleon2 is
 
 	signal clk42m : std_logic;
 	signal clk84m : std_logic;
+	signal clk100m : std_logic;
 	signal memclk : std_logic;
 	signal pll_locked : std_logic;
 	signal ena_1mhz : std_logic;
@@ -92,6 +93,11 @@ architecture rtl of chameleon2 is
 	signal joy4 : unsigned(7 downto 0);
 	signal ir : std_logic;
 	signal ir_d : std_logic;
+	signal debug1 : std_logic_vector(31 downto 0);
+	signal debug2 : std_logic_vector(31 downto 0);
+	signal debug3 : std_logic_vector(31 downto 0);
+	signal debug4 : std_logic_vector(31 downto 0);
+	
 
 	-- Sigma Delta audio
 	COMPONENT hybrid_pwm_sd
@@ -159,17 +165,17 @@ begin
 -- -----------------------------------------------------------------------
 	my1Mhz : entity work.chameleon_1mhz
 		generic map (
-			clk_ticks_per_usec => 126
+			clk_ticks_per_usec => 100
 		)
 		port map (
-			clk => memclk,
+			clk => clk100m,
 			ena_1mhz => ena_1mhz,
 			ena_1mhz_2 => open
 		);
 
 	my1Khz : entity work.chameleon_1khz
 		port map (
-			clk => memclk,
+			clk => clk100m,
 			ena_1mhz => ena_1mhz,
 			ena_1khz => ena_1khz
 		);
@@ -229,7 +235,7 @@ begin
 				enable_c64_4player => true
 			)
 			port map (
-				clk => memclk,
+				clk => clk100m,
 				ena_1mhz => ena_1mhz,
 				phi2_n => phi2_n,
 				dotclock_n => dotclk_n,
@@ -269,14 +275,19 @@ begin
 				joystick4 => joystick4,
 				keys => c64_keys,
 --				restore_key_n => restore_n
-				restore_key_n => open
+				restore_key_n => open,
+				debug1 => debug1,
+				debug2 => debug2,
+				debug3 => debug3
 			);
 	end block;
 
+debug4 <= no_clock & docking_station & std_logic_vector(c64_keys(29 downto 0));
+	
 -- Synchronise IR signal
-process (clk42m)
+process (clk100m)
 begin
-	if rising_edge(clk42m) then
+	if rising_edge(clk100m) then
 		ir_d<=ir_data;
 		ir<=ir_d;
 	end if;
@@ -299,6 +310,7 @@ joy4<="11" & joystick4;
       c1     => memclk,         -- 126MHz = 21.43MHz x 4
       c2     => ram_clk,        -- 126MHz external
 		c3		=> clk84m,		-- ~84Mhz, for ctrl module
+		c4		=> clk100m,
       locked => pll_locked
     );
 
@@ -355,7 +367,12 @@ virtualtoplevel : entity work.Virtual_Toplevel
 	 DAC_RDATA => audio_r,
 	 
 	 RS232_RXD => rs232_rxd,
-	 RS232_TXD => rs232_txd
+	 RS232_TXD => rs232_txd,
+	 
+	 debug1=>debug1,
+	 debug2=>debug2,
+	 debug3=>debug3,
+	 debug4=>debug4
 );
 
 	
