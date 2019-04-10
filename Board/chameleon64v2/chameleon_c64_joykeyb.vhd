@@ -69,15 +69,16 @@ entity chameleon_c64_joykeyb is
 		d : in unsigned(7 downto 0);
 		q : out unsigned(7 downto 0);
 
-		joystick1 : out unsigned(5 downto 0);
-		joystick2 : out unsigned(5 downto 0);
+		joystick1 : buffer unsigned(5 downto 0);
+		joystick2 : buffer unsigned(5 downto 0);
 		joystick3 : out unsigned(5 downto 0);
 		joystick4 : out unsigned(5 downto 0);
 		--  0 = col0, row0
 		--  1 = col1, row0
 		--  8 = col0, row1
 		-- 63 = col7, row7
-		keys : out unsigned(63 downto 0)
+		keys : out unsigned(63 downto 0);
+		keys_valid : out std_logic
 	);
 end entity;
 
@@ -99,9 +100,14 @@ architecture rtl of chameleon_c64_joykeyb is
 	signal potcnt : unsigned(9 downto 0) := (others => '0');
 	signal col : integer range 0 to 7 := 0;
 	signal keys_reg : unsigned(63 downto 0) := (others => '1');
+	signal keys_valid_r : std_logic;
+	signal keys_valid_d : std_logic;
 begin
 	keys <= keys_reg;
 	req <= req_reg;
+	-- AMR - joystick scanning interferes with the keyboard, so we supply a valid signal
+	-- which is high when two successive joystick reads have returned 1
+	keys_valid <= keys_valid_r and keys_valid_d;
 
 	process(clk)
 	begin
@@ -121,6 +127,7 @@ begin
 					if (reset = '0') and (ba = '1') then
 						state <= INIT_DISABLE_VIC;
 					end if;
+					keys_valid_d<='0';
 				when INIT_DISABLE_VIC =>
 					-- Turn off VIC-II raster DMA, so we don't have to deal with BA.
 					we <= '1';
@@ -167,6 +174,7 @@ begin
 					req_reg <= not req_reg;
 					cnt <= (others => '1');
 					state <= READ_ROW;
+					keys_valid_r<='0';  -- AMR - Clear valid flag while reading the keyboard
 				when READ_ROW =>
 					we <= '0';
 					a <= X"DC01";
@@ -247,6 +255,14 @@ begin
 					state <= STORE_JOY2;
 				when STORE_JOY2 =>
 					joystick2(4 downto 0) <= d(4 downto 0);
+					-- AMR - If the joystick was active then keyboard scanning gives false results
+					-- so we check that the joystick was idle both before and after the key scan
+					keys_valid_r<='0';
+					keys_valid_d<='0';
+					if joystick1(4 downto 0)="11111" and joystick2(4 downto 0)="11111" then
+						keys_valid_r<=keys_valid_d;
+						keys_valid_d<='1';
+					end if;
 					state <= SET_COL;
 					if enable_4player then
 						state <= READ_JOY34;

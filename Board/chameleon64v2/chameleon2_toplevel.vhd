@@ -79,6 +79,7 @@ architecture rtl of chameleon2 is
 	signal button_reset_n : std_logic;
 
 	signal c64_keys : unsigned(63 downto 0);
+	signal keys_valid : std_logic;
 	signal c64_restore_key_n : std_logic;
 	signal c64_nmi_n : std_logic;
 	signal c64_joy1 : unsigned(5 downto 0);
@@ -138,6 +139,8 @@ begin
 	irq_out <= '0';
 	nmi_out <= '0';
 	usart_rx<='1';
+	clock_ior <= '1';
+	clock_iow <= '1';
 
 	-- put these here?
 	flash_cs <= '1';
@@ -274,6 +277,7 @@ begin
 				joystick3 => joystick3,
 				joystick4 => joystick4,
 				keys => c64_keys,
+				keys_valid => keys_valid,
 --				restore_key_n => restore_n
 				restore_key_n => open,
 				debug1 => debug1,
@@ -295,8 +299,17 @@ end process;
 
 		
 --joy1<=not gp1_run & not gp1_select & (c64_joy1 and cdtv_joy1);
-gp1_run<=c64_keys(11) and c64_keys(56) when c64_joy1="111111" else '1';
-gp1_select<=c64_keys(60) when c64_joy1="111111" else '1';
+-- Update keypresses only when joystick is inactive.
+process(clk100m)
+begin
+	if rising_edge(clk100m) then
+		if keys_valid='1' then
+			gp1_run<=c64_keys(11) and c64_keys(56);
+			gp1_select<=c64_keys(60);
+		end if;
+	end if;
+end process;
+
 joy1<=gp1_run & gp1_select & c64_joy1;
 joy2<="11" & c64_joy2;
 joy3<="11" & joystick3;

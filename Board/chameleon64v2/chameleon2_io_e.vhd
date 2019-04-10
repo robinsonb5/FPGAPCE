@@ -162,6 +162,7 @@ entity chameleon2_io is
 		--  8 = col0, row1
 		-- 63 = col7, row7
 		keys : out unsigned(63 downto 0);
+		keys_valid : out std_logic;
 		restore_key_n : out std_logic;
 		amiga_reset_n : out std_logic;
 		amiga_trigger : out std_logic;

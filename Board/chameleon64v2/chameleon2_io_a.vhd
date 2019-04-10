@@ -262,7 +262,8 @@ begin
 					joystick2 => c64_joystick2,
 					joystick3 => c64_joystick3,
 					joystick4 => c64_joystick4,
-					keys => c64_keys
+					keys => c64_keys,
+					keys_valid => keys_valid
 				);
 
 			process(clk)
